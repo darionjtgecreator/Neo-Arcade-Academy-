@@ -100,12 +100,13 @@ const PracticePage = () => {
         setStreak(0);
       }
       
+      // Only show modals after a short delay to not interfere with result display
       if (response.data.level_up) {
-        setLevelUp(true);
+        setTimeout(() => setLevelUp(true), 1500);
       }
       
       if (response.data.new_badges && response.data.new_badges.length > 0) {
-        setNewBadges(response.data.new_badges);
+        setTimeout(() => setNewBadges(response.data.new_badges), response.data.level_up ? 3000 : 1500);
       }
       
       refreshUser();
@@ -339,8 +340,14 @@ const PracticePage = () => {
 
         {/* Level Up Modal */}
         {levelUp && (
-          <div className="level-up-celebration" onClick={() => setLevelUp(false)}>
-            <div className="glass p-8 rounded-3xl text-center max-w-sm mx-4 animate-bounce-in">
+          <div 
+            className="level-up-celebration" 
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setLevelUp(false);
+            }}
+            data-testid="level-up-modal"
+          >
+            <div className="glass p-8 rounded-3xl text-center max-w-sm mx-4 animate-bounce-in" onClick={(e) => e.stopPropagation()}>
               <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
                 <Trophy className="w-10 h-10 text-white" />
               </div>
@@ -348,7 +355,7 @@ const PracticePage = () => {
               <p className="text-muted-foreground mb-4">
                 You've reached Level {result?.new_level}!
               </p>
-              <Button className="btn-primary" onClick={() => setLevelUp(false)}>
+              <Button className="btn-primary" onClick={() => setLevelUp(false)} data-testid="dismiss-level-up-btn">
                 Awesome!
               </Button>
             </div>
@@ -357,8 +364,14 @@ const PracticePage = () => {
 
         {/* New Badge Modal */}
         {newBadges.length > 0 && !levelUp && (
-          <div className="level-up-celebration" onClick={() => setNewBadges([])}>
-            <div className="glass p-8 rounded-3xl text-center max-w-sm mx-4 animate-bounce-in">
+          <div 
+            className="level-up-celebration" 
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setNewBadges([]);
+            }}
+            data-testid="new-badge-modal"
+          >
+            <div className="glass p-8 rounded-3xl text-center max-w-sm mx-4 animate-bounce-in" onClick={(e) => e.stopPropagation()}>
               <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-accent to-primary flex items-center justify-center">
                 <Award className="w-10 h-10 text-white" />
               </div>
@@ -366,7 +379,7 @@ const PracticePage = () => {
               <p className="text-muted-foreground mb-4">
                 You've earned: {newBadges.map(b => b.replace(/_/g, ' ')).join(', ')}
               </p>
-              <Button className="btn-primary" onClick={() => setNewBadges([])}>
+              <Button className="btn-primary" onClick={() => setNewBadges([])} data-testid="dismiss-badge-btn">
                 <Sparkles className="w-4 h-4 mr-2" />
                 Sweet!
               </Button>
