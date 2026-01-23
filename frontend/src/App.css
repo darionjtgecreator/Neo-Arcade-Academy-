@@ -1,34 +1,226 @@
-.App-logo {
-    height: 40vmin;
-    pointer-events: none;
+/* Neo-Arcade Academy - App Specific Styles */
+
+/* Landing page hero */
+.hero-section {
+    min-height: 100vh;
+    background: linear-gradient(180deg, hsl(222, 47%, 11%) 0%, hsl(222, 47%, 8%) 100%);
+    position: relative;
+    overflow: hidden;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-    .App-logo {
-        animation: App-logo-spin infinite 20s linear;
+.hero-section::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(ellipse at center, rgba(139, 92, 246, 0.15) 0%, transparent 50%);
+    animation: rotate 30s linear infinite;
+}
+
+@keyframes rotate {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Problem card */
+.problem-card {
+    background: hsl(var(--card));
+    border-radius: 1.5rem;
+    border: 1px solid hsl(var(--border));
+    position: relative;
+    overflow: hidden;
+}
+
+.problem-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #8B5CF6, #06B6D4, #EC4899);
+}
+
+/* Dashboard grid */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 1.5rem;
+}
+
+@media (max-width: 1024px) {
+    .dashboard-grid {
+        grid-template-columns: repeat(6, 1fr);
     }
 }
 
-.App-header {
-    background-color: #0f0f10;
-    min-height: 100vh;
+@media (max-width: 640px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Leaderboard row */
+.leaderboard-row {
     display: flex;
-    flex-direction: column;
+    align-items: center;
+    padding: 1rem;
+    border-radius: 1rem;
+    background: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.leaderboard-row:hover {
+    transform: translateX(4px);
+    border-color: hsl(var(--primary));
+}
+
+.leaderboard-row.top-3 {
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(6, 182, 212, 0.1));
+}
+
+/* Achievement unlock animation */
+.achievement-unlock {
+    animation: achievement-pop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes achievement-pop {
+    0% { transform: scale(0) rotate(-180deg); opacity: 0; }
+    50% { transform: scale(1.2) rotate(10deg); }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+/* XP gain animation */
+.xp-gain {
+    animation: xp-float 1s ease-out forwards;
+}
+
+@keyframes xp-float {
+    0% { transform: translateY(0); opacity: 1; }
+    100% { transform: translateY(-50px); opacity: 0; }
+}
+
+/* Level up celebration */
+.level-up-celebration {
+    position: fixed;
+    inset: 0;
+    display: flex;
     align-items: center;
     justify-content: center;
-    font-size: calc(10px + 2vmin);
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 100;
+    animation: fade-in 0.3s ease;
+}
+
+@keyframes fade-in {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+}
+
+/* Confetti particles */
+.confetti {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    animation: confetti-fall 3s ease-out forwards;
+}
+
+@keyframes confetti-fall {
+    0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+}
+
+/* Nav link active state */
+.nav-link {
+    position: relative;
+    padding: 0.5rem 1rem;
+    border-radius: 0.75rem;
+    transition: background 0.2s ease;
+}
+
+.nav-link:hover {
+    background: hsl(var(--muted));
+}
+
+.nav-link.active {
+    background: hsl(var(--primary));
     color: white;
 }
 
-.App-link {
-    color: #61dafb;
+/* Math equation display */
+.math-equation {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.25rem;
+    padding: 1.5rem;
+    background: hsl(var(--muted));
+    border-radius: 1rem;
+    border: 1px solid hsl(var(--border));
 }
 
-@keyframes App-logo-spin {
-    from {
-        transform: rotate(0deg);
-    }
-    to {
-        transform: rotate(360deg);
-    }
+/* Difficulty selector */
+.difficulty-btn {
+    padding: 0.5rem 1.5rem;
+    border-radius: 9999px;
+    font-weight: 600;
+    border: 2px solid transparent;
+    transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.difficulty-btn.easy {
+    background: rgba(132, 204, 22, 0.2);
+    color: #84CC16;
+}
+
+.difficulty-btn.easy.active,
+.difficulty-btn.easy:hover {
+    border-color: #84CC16;
+    background: rgba(132, 204, 22, 0.3);
+}
+
+.difficulty-btn.medium {
+    background: rgba(245, 158, 11, 0.2);
+    color: #F59E0B;
+}
+
+.difficulty-btn.medium.active,
+.difficulty-btn.medium:hover {
+    border-color: #F59E0B;
+    background: rgba(245, 158, 11, 0.3);
+}
+
+.difficulty-btn.hard {
+    background: rgba(239, 68, 68, 0.2);
+    color: #EF4444;
+}
+
+.difficulty-btn.hard.active,
+.difficulty-btn.hard:hover {
+    border-color: #EF4444;
+    background: rgba(239, 68, 68, 0.3);
+}
+
+/* Loading spinner */
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid hsl(var(--muted));
+    border-top-color: hsl(var(--primary));
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Toast customization */
+[data-sonner-toaster] {
+    --normal-bg: hsl(var(--card));
+    --normal-border: hsl(var(--border));
+    --normal-text: hsl(var(--foreground));
 }
