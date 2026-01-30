@@ -353,6 +353,14 @@ BADGE_DEFINITIONS = {
     "weekend_warrior": {"name": "Weekend Warrior", "description": "Practice on weekends", "icon": "calendar", "category": "special"},
     "topic_explorer": {"name": "Topic Explorer", "description": "Try 10 different topics", "icon": "compass", "category": "special"},
     "grade_hopper": {"name": "Grade Hopper", "description": "Practice in 5 different grades", "icon": "layers", "category": "special"},
+    
+    # Daily Challenge badges
+    "daily_first": {"name": "First Challenge", "description": "Complete your first daily challenge", "icon": "calendar-check", "category": "daily"},
+    "daily_10": {"name": "Challenge Regular", "description": "Complete 10 daily challenges", "icon": "calendar-days", "category": "daily"},
+    "daily_50": {"name": "Challenge Champion", "description": "Complete 50 daily challenges", "icon": "calendar-star", "category": "daily"},
+    "daily_streak_3": {"name": "3-Day Streak", "description": "Complete daily challenges 3 days in a row", "icon": "flame", "category": "daily"},
+    "daily_streak_7": {"name": "Week Warrior", "description": "Complete daily challenges 7 days in a row", "icon": "fire", "category": "daily"},
+    "daily_streak_30": {"name": "Monthly Master", "description": "Complete daily challenges 30 days in a row", "icon": "trophy", "category": "daily"},
 }
 
 async def check_and_award_badges(user: dict, problem_data: dict = None) -> List[str]:
