@@ -283,15 +283,204 @@ class MathLearningAPITester:
             else:
                 print("   ❌ Hint field missing from problem response")
 
+    def test_badges_system(self):
+        """Test badges system with categories"""
+        print("\n🔍 Testing Badges System...")
+        
+        # Test get all badges
+        badges_response = self.run_test("Get All Badges", "GET", "badges", 200)
+        
+        if badges_response and isinstance(badges_response, list):
+            print(f"   📝 Found {len(badges_response)} badges")
+            
+            # Check if we have 34 badges as specified
+            if len(badges_response) == 34:
+                print("   ✅ Correct number of badges (34)")
+            else:
+                print(f"   ⚠️ Expected 34 badges, found {len(badges_response)}")
+            
+            # Check badge structure and categories
+            categories_found = set()
+            badges_with_categories = 0
+            
+            for badge in badges_response:
+                required_fields = ['id', 'name', 'description', 'icon', 'category', 'earned']
+                missing_fields = [field for field in required_fields if field not in badge]
+                
+                if missing_fields:
+                    print(f"   ⚠️ Badge {badge.get('id', 'unknown')} missing fields: {missing_fields}")
+                else:
+                    badges_with_categories += 1
+                    categories_found.add(badge['category'])
+            
+            print(f"   📝 Badges with complete structure: {badges_with_categories}/{len(badges_response)}")
+            print(f"   📝 Categories found: {sorted(categories_found)}")
+            
+            # Check for expected 8 categories
+            expected_categories = {'milestone', 'streak', 'level', 'accuracy', 'difficulty', 'topic', 'grade', 'special'}
+            if categories_found == expected_categories:
+                print("   ✅ All 8 expected categories present")
+            else:
+                missing = expected_categories - categories_found
+                extra = categories_found - expected_categories
+                if missing:
+                    print(f"   ⚠️ Missing categories: {missing}")
+                if extra:
+                    print(f"   ⚠️ Extra categories: {extra}")
+        else:
+            print("   ❌ Failed to get badges or invalid response format")
+
+    def test_mastery_system(self):
+        """Test topic mastery tracking system"""
+        print("\n🔍 Testing Mastery System...")
+        
+        # Test get all topic mastery
+        mastery_response = self.run_test("Get Topic Mastery", "GET", "mastery", 200)
+        
+        if mastery_response and isinstance(mastery_response, list):
+            print(f"   📝 Found mastery data for {len(mastery_response)} topics")
+            
+            if len(mastery_response) > 0:
+                # Check first mastery entry structure
+                mastery_entry = mastery_response[0]
+                required_fields = ['topic_id', 'topic_name', 'completed', 'correct', 'accuracy', 'mastery_level', 'mastery_percent', 'next_milestone']
+                missing_fields = [field for field in required_fields if field not in mastery_entry]
+                
+                if missing_fields:
+                    print(f"   ⚠️ Mastery entry missing fields: {missing_fields}")
+                else:
+                    print("   ✅ Mastery entry structure is complete")
+                    
+                    # Check mastery levels
+                    mastery_levels = set()
+                    for entry in mastery_response:
+                        mastery_levels.add(entry.get('mastery_level', 'Unknown'))
+                    
+                    print(f"   📝 Mastery levels found: {sorted(mastery_levels)}")
+                    
+                    # Check for expected 5 mastery levels
+                    expected_levels = {'Novice', 'Beginner', 'Intermediate', 'Advanced', 'Master'}
+                    if mastery_levels.issubset(expected_levels):
+                        print("   ✅ Valid mastery levels")
+                    else:
+                        invalid = mastery_levels - expected_levels
+                        if invalid:
+                            print(f"   ⚠️ Invalid mastery levels: {invalid}")
+                
+                # Test single topic mastery
+                test_topic = mastery_response[0]['topic_id']
+                single_mastery = self.run_test(f"Get Single Topic Mastery ({test_topic})", "GET", f"mastery/{test_topic}", 200)
+                
+                if single_mastery:
+                    print(f"   📝 Single topic mastery: {single_mastery.get('mastery_level', 'N/A')} ({single_mastery.get('mastery_percent', 0)}%)")
+        else:
+            print("   ❌ Failed to get mastery data or invalid response format")
+
+    def test_adaptive_difficulty(self):
+        """Test adaptive difficulty recommendation system"""
+        print("\n🔍 Testing Adaptive Difficulty...")
+        
+        # Test get adaptive difficulty recommendation
+        adaptive_response = self.run_test("Get Adaptive Difficulty", "GET", "adaptive-difficulty", 200)
+        
+        if adaptive_response:
+            required_fields = ['current_difficulty', 'recommended_difficulty', 'reason', 'recent_accuracy', 'recent_problems', 'confidence']
+            missing_fields = [field for field in required_fields if field not in adaptive_response]
+            
+            if missing_fields:
+                print(f"   ⚠️ Adaptive difficulty missing fields: {missing_fields}")
+            else:
+                print("   ✅ Adaptive difficulty structure is complete")
+                print(f"   📝 Current difficulty: {adaptive_response.get('current_difficulty')}")
+                print(f"   📝 Recommended difficulty: {adaptive_response.get('recommended_difficulty')}")
+                print(f"   📝 Recent accuracy: {adaptive_response.get('recent_accuracy')}%")
+                print(f"   📝 Recent problems: {adaptive_response.get('recent_problems')}")
+                print(f"   📝 Confidence: {adaptive_response.get('confidence')}")
+                print(f"   📝 Reason: {adaptive_response.get('reason', 'N/A')[:100]}...")
+                
+                # Validate difficulty values
+                valid_difficulties = {'easy', 'medium', 'hard'}
+                current_diff = adaptive_response.get('current_difficulty')
+                recommended_diff = adaptive_response.get('recommended_difficulty')
+                
+                if current_diff in valid_difficulties and recommended_diff in valid_difficulties:
+                    print("   ✅ Valid difficulty values")
+                else:
+                    print(f"   ⚠️ Invalid difficulty values: current={current_diff}, recommended={recommended_diff}")
+        else:
+            print("   ❌ Failed to get adaptive difficulty data")
+        
+        # Test adaptive difficulty with topic filter
+        test_topic = "algebra"
+        topic_adaptive = self.run_test(f"Get Adaptive Difficulty for Topic ({test_topic})", "GET", f"adaptive-difficulty?topic={test_topic}", 200)
+        
+        if topic_adaptive:
+            print(f"   📝 Topic-specific recommendation: {topic_adaptive.get('recommended_difficulty', 'N/A')}")
+
+    def test_enhanced_answer_submission(self, grade=5, topics=None):
+        """Test enhanced answer submission with adaptive difficulty"""
+        print("\n🔍 Testing Enhanced Answer Submission...")
+        
+        if not topics or len(topics) == 0:
+            print("   ⚠️ No topics available for enhanced answer testing")
+            return
+        
+        # Use first available topic
+        test_topic = topics[0]['id']
+        
+        # Generate a problem first
+        problem_data = {
+            "grade": grade,
+            "topic": test_topic,
+            "difficulty": "medium"
+        }
+        
+        print(f"   🎯 Generating problem for enhanced answer testing")
+        problem_response = self.run_test("Generate Problem for Enhanced Answer", "POST", "problems/generate", 200, problem_data)
+        
+        if problem_response and 'id' in problem_response:
+            problem_id = problem_response['id']
+            
+            # Submit answer and check for enhanced fields
+            if 'options' in problem_response and len(problem_response['options']) > 0:
+                answer_data = {
+                    "problem_id": problem_id,
+                    "selected_answer": problem_response['options'][0]
+                }
+                
+                answer_response = self.run_test("Submit Enhanced Answer", "POST", "problems/answer", 200, answer_data)
+                
+                if answer_response:
+                    # Check for new adaptive difficulty fields
+                    required_fields = ['correct', 'correct_answer', 'explanation', 'xp_earned', 'new_total_xp', 'new_level', 'level_up', 'new_badges', 'recommended_difficulty']
+                    missing_fields = [field for field in required_fields if field not in answer_response]
+                    
+                    if missing_fields:
+                        print(f"   ⚠️ Answer response missing fields: {missing_fields}")
+                    else:
+                        print("   ✅ Enhanced answer response structure is complete")
+                    
+                    # Check adaptive difficulty fields specifically
+                    if 'recommended_difficulty' in answer_response:
+                        print(f"   📝 Recommended difficulty: {answer_response['recommended_difficulty']}")
+                        
+                        if 'difficulty_change_reason' in answer_response and answer_response['difficulty_change_reason']:
+                            print(f"   📝 Difficulty change reason: {answer_response['difficulty_change_reason'][:100]}...")
+                        else:
+                            print("   📝 No difficulty change recommended")
+                    
+                    print(f"   📝 Answer result: {'Correct' if answer_response.get('correct') else 'Incorrect'}")
+                    print(f"   📝 XP earned: {answer_response.get('xp_earned', 0)}")
+                    print(f"   📝 New badges: {len(answer_response.get('new_badges', []))}")
+        else:
+            print("   ❌ Problem generation failed for enhanced answer testing")
+
     def test_progress_and_stats(self):
         """Test progress and statistics endpoints"""
         print("\n🔍 Testing Progress & Stats...")
         
         # Test get progress
         self.run_test("Get User Progress", "GET", "progress", 200)
-        
-        # Test get badges
-        self.run_test("Get All Badges", "GET", "badges", 200)
         
         # Test leaderboard
         self.run_test("Get Leaderboard", "GET", "leaderboard", 200)
