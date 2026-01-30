@@ -7,26 +7,32 @@ import { Progress } from "../components/ui/progress";
 import axios from "axios";
 import { 
   Zap, Trophy, Target, Flame, ChevronRight, 
-  Medal, BookOpen, BarChart3, Star, Award, TrendingUp
+  Medal, BookOpen, BarChart3, Star, Award, TrendingUp,
+  Calendar, Gift, Clock
 } from "lucide-react";
 
 const DashboardPage = () => {
   const { user, token, refreshUser } = useAuth();
   const [progress, setProgress] = useState(null);
   const [leaderboard, setLeaderboard] = useState([]);
+  const [dailyChallenge, setDailyChallenge] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [progressRes, leaderboardRes] = await Promise.all([
+        const [progressRes, leaderboardRes, dailyRes] = await Promise.all([
           axios.get(`${API}/progress`, {
             headers: { Authorization: `Bearer ${token}` }
           }),
-          axios.get(`${API}/leaderboard`)
+          axios.get(`${API}/leaderboard`),
+          axios.get(`${API}/daily-challenge`, {
+            headers: { Authorization: `Bearer ${token}` }
+          }).catch(() => null)
         ]);
         setProgress(progressRes.data);
         setLeaderboard(leaderboardRes.data.slice(0, 5));
+        if (dailyRes) setDailyChallenge(dailyRes.data);
       } catch (error) {
         console.error("Failed to fetch data:", error);
       } finally {
