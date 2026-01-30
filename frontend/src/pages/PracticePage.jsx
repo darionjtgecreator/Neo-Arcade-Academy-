@@ -23,6 +23,7 @@ const PracticePage = () => {
   const [result, setResult] = useState(null);
   const [difficulty, setDifficulty] = useState("medium");
   const [showExplanation, setShowExplanation] = useState(false);
+  const [showHint, setShowHint] = useState(false);
   const [streak, setStreak] = useState(0);
   const [levelUp, setLevelUp] = useState(false);
   const [newBadges, setNewBadges] = useState([]);
