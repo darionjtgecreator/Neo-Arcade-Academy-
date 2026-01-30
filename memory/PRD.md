@@ -79,11 +79,28 @@ Build an app that would teach 5th graders (12 years old) math from 1st grade all
 - Neo-Arcade themed UI (dark mode, neon colors)
 - Responsive design for all devices
 
-### January 2025 - Feature Update
+### January 2025 - Feature Update v1
 - **Interactive Lessons**: Each topic has comprehensive lesson content with Overview, Key Concepts, Examples, and Tips tabs
 - **Practice History**: Track all solved problems with detailed stats by topic and difficulty
 - **Hint System**: AI-generated hints for problems (revealed on demand without penalty)
 - **Navigation Update**: Added History link in nav bar, Learn/Practice buttons on topic cards
+
+### January 2025 - Feature Update v2
+- **34 Achievement Badges**: Expanded from 12 to 34 badges across 8 categories:
+  - Milestone (problems completed)
+  - Streak (consecutive correct answers)
+  - Level (XP-based levels)
+  - Accuracy (overall accuracy percentages)
+  - Difficulty (mastering easy/medium/hard)
+  - Topic (mastering specific topics)
+  - Grade (completing all topics in a grade)
+  - Special (time-based, exploration)
+- **Topic Mastery Tracking**: 5 mastery levels (Novice → Beginner → Intermediate → Advanced → Master) based on problems completed and accuracy
+- **Adaptive Difficulty**: AI-powered difficulty recommendations based on recent performance:
+  - Recommends harder problems when doing well (85%+ accuracy)
+  - Recommends easier problems when struggling (40%- accuracy)
+  - Shows recommendation popup after answering
+- **Mastery Page**: New page showing mastery level for all topics with progress visualization
 
 ### API Endpoints
 - `/api/auth/register` - User registration
@@ -93,11 +110,14 @@ Build an app that would teach 5th graders (12 years old) math from 1st grade all
 - `/api/topics/{grade}` - Get topics for grade
 - `/api/lessons/{grade}/{topic}` - Get interactive lesson content
 - `/api/problems/generate` - Generate AI problem with hint
-- `/api/problems/answer` - Submit answer
+- `/api/problems/answer` - Submit answer (includes adaptive difficulty recommendation)
 - `/api/progress` - Get user progress
 - `/api/history` - Get practice history
 - `/api/history/stats` - Get detailed stats
-- `/api/badges` - Get all badges
+- `/api/mastery` - Get mastery levels for all topics
+- `/api/mastery/{topic}` - Get mastery for specific topic
+- `/api/adaptive-difficulty` - Get difficulty recommendation
+- `/api/badges` - Get all 34 badges with categories
 - `/api/leaderboard` - Get top players
 
 ## Prioritized Backlog
@@ -106,11 +126,14 @@ Build an app that would teach 5th graders (12 years old) math from 1st grade all
 - ✅ Interactive lessons/tutorials per topic
 - ✅ Practice history tracking
 - ✅ Hint system for problems
+- ✅ More diverse badges (34 total)
+- ✅ Adaptive difficulty based on performance
+- ✅ Topic mastery percentage tracking
 
 ### P1 - High Priority
-- More badge types
-- Adaptive difficulty based on performance
-- Topic mastery tracking
+- Grade completion tracking
+- Recommended learning path
+- Daily challenges
 
 ### P2 - Medium Priority
 - Dark/Light mode toggle
@@ -119,7 +142,7 @@ Build an app that would teach 5th graders (12 years old) math from 1st grade all
 - Sound effects for achievements
 
 ## Next Tasks
-1. Add more diverse badges (topic-specific, difficulty-based)
-2. Implement adaptive difficulty that increases/decreases based on recent performance
-3. Add topic mastery percentage tracking
-4. Create parent/teacher dashboard view
+1. Add daily challenge system with special rewards
+2. Create recommended learning paths based on weak areas
+3. Add grade completion badges tracking
+4. Implement parent/teacher dashboard view
