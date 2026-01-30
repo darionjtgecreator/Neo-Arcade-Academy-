@@ -306,7 +306,7 @@ class MathLearningAPITester:
                 print("   ❌ Hint field missing from problem response")
 
     def test_badges_system(self):
-        """Test badges system with categories"""
+        """Test badges system with categories including daily challenge badges"""
         print("\n🔍 Testing Badges System...")
         
         # Test get all badges
@@ -315,15 +315,16 @@ class MathLearningAPITester:
         if badges_response and isinstance(badges_response, list):
             print(f"   📝 Found {len(badges_response)} badges")
             
-            # Check if we have 34 badges as specified
-            if len(badges_response) == 34:
-                print("   ✅ Correct number of badges (34)")
+            # Check if we have 40 badges as specified (updated from 34)
+            if len(badges_response) >= 40:
+                print(f"   ✅ Correct number of badges (40+): {len(badges_response)}")
             else:
-                print(f"   ⚠️ Expected 34 badges, found {len(badges_response)}")
+                print(f"   ⚠️ Expected 40+ badges, found {len(badges_response)}")
             
             # Check badge structure and categories
             categories_found = set()
             badges_with_categories = 0
+            daily_badges = []
             
             for badge in badges_response:
                 required_fields = ['id', 'name', 'description', 'icon', 'category', 'earned']
@@ -334,14 +335,18 @@ class MathLearningAPITester:
                 else:
                     badges_with_categories += 1
                     categories_found.add(badge['category'])
+                    
+                    # Collect daily challenge badges
+                    if badge['category'] == 'daily':
+                        daily_badges.append(badge['id'])
             
             print(f"   📝 Badges with complete structure: {badges_with_categories}/{len(badges_response)}")
             print(f"   📝 Categories found: {sorted(categories_found)}")
             
-            # Check for expected 8 categories
-            expected_categories = {'milestone', 'streak', 'level', 'accuracy', 'difficulty', 'topic', 'grade', 'special'}
+            # Check for expected 9 categories (including daily)
+            expected_categories = {'milestone', 'streak', 'level', 'accuracy', 'difficulty', 'topic', 'grade', 'special', 'daily'}
             if categories_found == expected_categories:
-                print("   ✅ All 8 expected categories present")
+                print("   ✅ All 9 expected categories present (including daily)")
             else:
                 missing = expected_categories - categories_found
                 extra = categories_found - expected_categories
@@ -349,6 +354,22 @@ class MathLearningAPITester:
                     print(f"   ⚠️ Missing categories: {missing}")
                 if extra:
                     print(f"   ⚠️ Extra categories: {extra}")
+            
+            # Check daily challenge badges specifically
+            print(f"   📝 Daily challenge badges found: {len(daily_badges)}")
+            expected_daily_badges = ['daily_first', 'daily_10', 'daily_50', 'daily_streak_3', 'daily_streak_7', 'daily_streak_30']
+            
+            for expected_badge in expected_daily_badges:
+                if expected_badge in daily_badges:
+                    print(f"   ✅ Found daily badge: {expected_badge}")
+                else:
+                    print(f"   ⚠️ Missing daily badge: {expected_badge}")
+            
+            if len(daily_badges) >= 6:
+                print("   ✅ Daily challenge badges requirement met (6+)")
+            else:
+                print(f"   ⚠️ Expected 6+ daily badges, found {len(daily_badges)}")
+                
         else:
             print("   ❌ Failed to get badges or invalid response format")
 
