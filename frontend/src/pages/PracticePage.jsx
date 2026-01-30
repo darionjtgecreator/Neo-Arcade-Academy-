@@ -59,6 +59,7 @@ const PracticePage = () => {
     setSelectedAnswer(null);
     setResult(null);
     setShowExplanation(false);
+    setShowHint(false);
     
     try {
       const response = await axios.post(
