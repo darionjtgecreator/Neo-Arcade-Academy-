@@ -105,6 +105,13 @@ const PracticePage = () => {
         setStreak(0);
       }
       
+      // Handle adaptive difficulty recommendation
+      if (response.data.recommended_difficulty && response.data.recommended_difficulty !== difficulty) {
+        setRecommendedDifficulty(response.data.recommended_difficulty);
+        setDifficultyReason(response.data.difficulty_change_reason);
+        setTimeout(() => setShowDifficultyRecommendation(true), 2000);
+      }
+      
       // Only show modals after a short delay to not interfere with result display
       if (response.data.level_up) {
         setTimeout(() => setLevelUp(true), 1500);
@@ -127,7 +134,16 @@ const PracticePage = () => {
   const handleNextProblem = () => {
     setLevelUp(false);
     setNewBadges([]);
+    setShowDifficultyRecommendation(false);
     generateProblem();
+  };
+
+  const handleAcceptDifficultyChange = () => {
+    setDifficulty(recommendedDifficulty);
+    setShowDifficultyRecommendation(false);
+    setRecommendedDifficulty(null);
+    setDifficultyReason(null);
+    toast.success(`Difficulty changed to ${recommendedDifficulty}!`);
   };
 
   const getOptionClass = (option) => {
