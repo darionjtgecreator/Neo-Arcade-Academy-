@@ -85,42 +85,64 @@ class MathLearningAPITester:
         """Test authentication endpoints"""
         print("\n🔍 Testing Authentication...")
         
-        # Generate unique test user
-        timestamp = datetime.now().strftime('%H%M%S')
-        test_username = f"testuser_{timestamp}"
-        test_email = f"test_{timestamp}@example.com"
-        test_password = "TestPass123!"
-
-        # Test registration
-        register_data = {
-            "username": test_username,
-            "email": test_email,
-            "password": test_password
-        }
+        # Try to login with provided test credentials first
+        test_email = "mathstudent@test.com"
+        test_password = "password123"
         
-        response = self.run_test("User Registration", "POST", "auth/register", 200, register_data)
-        if response and 'token' in response:
-            self.token = response['token']
-            self.user_id = response['user']['id']
-            print(f"   📝 Registered user: {test_username}")
-        else:
-            print("   ❌ Registration failed - cannot continue with auth tests")
-            return False
-
-        # Test login with same credentials
         login_data = {
             "email": test_email,
             "password": test_password
         }
         
-        login_response = self.run_test("User Login", "POST", "auth/login", 200, login_data)
+        print(f"   🔑 Attempting login with provided test credentials: {test_email}")
+        login_response = self.run_test("Login with Test Credentials", "POST", "auth/login", 200, login_data)
+        
         if login_response and 'token' in login_response:
-            print(f"   📝 Login successful")
-        
-        # Test get current user
-        self.run_test("Get Current User", "GET", "auth/me", 200)
-        
-        return True
+            self.token = login_response['token']
+            self.user_id = login_response['user']['id']
+            print(f"   📝 Login successful with test user")
+            
+            # Test get current user
+            self.run_test("Get Current User", "GET", "auth/me", 200)
+            return True
+        else:
+            print("   ⚠️ Test credentials failed, trying registration...")
+            
+            # Generate unique test user as fallback
+            timestamp = datetime.now().strftime('%H%M%S')
+            test_username = f"testuser_{timestamp}"
+            fallback_email = f"test_{timestamp}@example.com"
+            fallback_password = "TestPass123!"
+
+            # Test registration
+            register_data = {
+                "username": test_username,
+                "email": fallback_email,
+                "password": fallback_password
+            }
+            
+            response = self.run_test("User Registration (Fallback)", "POST", "auth/register", 200, register_data)
+            if response and 'token' in response:
+                self.token = response['token']
+                self.user_id = response['user']['id']
+                print(f"   📝 Registered fallback user: {test_username}")
+                
+                # Test login with new credentials
+                login_data = {
+                    "email": fallback_email,
+                    "password": fallback_password
+                }
+                
+                login_response = self.run_test("User Login (Fallback)", "POST", "auth/login", 200, login_data)
+                if login_response and 'token' in login_response:
+                    print(f"   📝 Login successful with fallback user")
+                
+                # Test get current user
+                self.run_test("Get Current User", "GET", "auth/me", 200)
+                return True
+            else:
+                print("   ❌ Both test credentials and registration failed - cannot continue with auth tests")
+                return False
 
     def test_grades_and_topics(self):
         """Test grade and topic endpoints"""
