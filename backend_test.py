@@ -381,7 +381,7 @@ class MathLearningAPITester:
                     print(f"   📝 Mastery levels found: {sorted(mastery_levels)}")
                     
                     # Check for expected 5 mastery levels
-                    expected_levels = {'Novice', 'Beginner', 'Intermediate', 'Advanced', 'Master'}
+                    expected_levels = {'Novice', 'Beginner', 'Intermediate', 'Advanced', 'Master', 'Not Started'}
                     if mastery_levels.issubset(expected_levels):
                         print("   ✅ Valid mastery levels")
                     else:
