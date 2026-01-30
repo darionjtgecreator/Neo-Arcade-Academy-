@@ -81,10 +81,32 @@ class ProblemResponse(BaseModel):
     options: List[str]
     correct_answer: str
     explanation: str
+    hint: str
     grade: int
     topic: str
     difficulty: str
     xp_reward: int
+
+class PracticeHistoryEntry(BaseModel):
+    id: str
+    question: str
+    topic: str
+    grade: int
+    difficulty: str
+    correct: bool
+    user_answer: str
+    correct_answer: str
+    xp_earned: int
+    answered_at: str
+
+class LessonContent(BaseModel):
+    topic_id: str
+    topic_name: str
+    grade: int
+    overview: str
+    key_concepts: List[dict]
+    examples: List[dict]
+    tips: List[str]
 
 class AnswerSubmit(BaseModel):
     problem_id: str
