@@ -15,6 +15,8 @@ import PracticePage from "./pages/PracticePage";
 import AchievementsPage from "./pages/AchievementsPage";
 import LeaderboardPage from "./pages/LeaderboardPage";
 import ProfilePage from "./pages/ProfilePage";
+import LessonPage from "./pages/LessonPage";
+import HistoryPage from "./pages/HistoryPage";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 export const API = `${BACKEND_URL}/api`;
@@ -146,7 +148,9 @@ function App() {
           <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
           <Route path="/grades" element={<ProtectedRoute><GradeSelectPage /></ProtectedRoute>} />
           <Route path="/topics/:grade" element={<ProtectedRoute><TopicSelectPage /></ProtectedRoute>} />
+          <Route path="/lesson/:grade/:topic" element={<ProtectedRoute><LessonPage /></ProtectedRoute>} />
           <Route path="/practice/:grade/:topic" element={<ProtectedRoute><PracticePage /></ProtectedRoute>} />
+          <Route path="/history" element={<ProtectedRoute><HistoryPage /></ProtectedRoute>} />
           <Route path="/achievements" element={<ProtectedRoute><AchievementsPage /></ProtectedRoute>} />
           <Route path="/leaderboard" element={<ProtectedRoute><LeaderboardPage /></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
