@@ -988,6 +988,278 @@ async def update_current_grade(grade: int, current_user: dict = Depends(get_curr
     await db.users.update_one({"id": current_user["id"]}, {"$set": {"current_grade": grade}})
     return {"success": True, "current_grade": grade}
 
+# ============== DAILY CHALLENGE ==============
+
+def get_today_date():
+    """Get today's date string in YYYY-MM-DD format"""
+    return datetime.now(timezone.utc).strftime("%Y-%m-%d")
+
+def get_daily_challenge_topic(date_str: str):
+    """Deterministically select a topic based on the date"""
+    import hashlib
+    topics = ["geometry", "algebra", "word_problems", "fractions", "trigonometry", "calculus", "statistics"]
+    hash_val = int(hashlib.md5(date_str.encode()).hexdigest(), 16)
+    return topics[hash_val % len(topics)]
+
+def get_daily_challenge_grade(date_str: str):
+    """Deterministically select a grade based on the date"""
+    import hashlib
+    hash_val = int(hashlib.md5((date_str + "grade").encode()).hexdigest(), 16)
+    return (hash_val % 12) + 1  # Grades 1-12
+
+@api_router.get("/daily-challenge", response_model=DailyChallenge)
+async def get_daily_challenge(current_user: dict = Depends(get_current_user)):
+    """Get today's daily challenge"""
+    today = get_today_date()
+    
+    # Check if user already completed today's challenge
+    user_daily = current_user.get("daily_challenges", {})
+    completed_today = user_daily.get(today, {})
+    
+    # Check if daily challenge exists for today
+    existing_challenge = await db.daily_challenges.find_one({"date": today}, {"_id": 0})
+    
+    if existing_challenge:
+        return DailyChallenge(
+            id=existing_challenge["id"],
+            date=existing_challenge["date"],
+            question=existing_challenge["question"],
+            options=existing_challenge["options"],
+            correct_answer=existing_challenge["correct_answer"],
+            explanation=existing_challenge["explanation"],
+            hint=existing_challenge.get("hint", "Think carefully about this challenge!"),
+            grade=existing_challenge["grade"],
+            topic=existing_challenge["topic"],
+            difficulty=existing_challenge["difficulty"],
+            xp_reward=existing_challenge["xp_reward"],
+            bonus_xp=existing_challenge["bonus_xp"],
+            completed=bool(completed_today.get("completed")),
+            user_answer=completed_today.get("user_answer"),
+            was_correct=completed_today.get("correct")
+        )
+    
+    # Generate new daily challenge
+    topic = get_daily_challenge_topic(today)
+    grade = get_daily_challenge_grade(today)
+    topic_name = TOPIC_DISPLAY_NAMES.get(topic, topic)
+    
+    api_key = os.environ.get('EMERGENT_LLM_KEY')
+    if not api_key:
+        raise HTTPException(status_code=500, detail="AI service not configured")
+    
+    prompt = f"""Generate a challenging math problem for today's Daily Challenge. This should be a hard difficulty problem for Grade {grade} on the topic of {topic_name}.
+
+This is a special daily challenge, so make it interesting and engaging!
+
+Respond in EXACTLY this JSON format (no markdown, no code blocks, just raw JSON):
+{{
+    "question": "The math question text here - make it interesting!",
+    "options": ["A) option1", "B) option2", "C) option3", "D) option4"],
+    "correct_answer": "A) option1",
+    "explanation": "Detailed step-by-step explanation",
+    "hint": "A helpful hint without giving away the answer"
+}}
+
+Make sure:
+1. The problem is challenging but solvable
+2. Make it interesting - use real-world scenarios when possible
+3. All 4 options should be plausible
+4. The explanation should be thorough and educational"""
+
+    try:
+        chat = LlmChat(
+            api_key=api_key,
+            session_id=f"daily-{today}",
+            system_message="You are creating an exciting daily math challenge. Make it engaging and educational!"
+        ).with_model("openai", "gpt-5.2")
+        
+        response = await chat.send_message(UserMessage(text=prompt))
+        
+        import json
+        response_text = response.strip()
+        if response_text.startswith("```"):
+            response_text = response_text.split("```")[1]
+            if response_text.startswith("json"):
+                response_text = response_text[4:]
+        response_text = response_text.strip()
+        
+        problem_data = json.loads(response_text)
+        
+        challenge_id = f"daily-{today}"
+        base_xp = 50  # Daily challenges give more XP
+        bonus_xp = 25  # Extra bonus for completing daily
+        
+        # Store the daily challenge
+        challenge_doc = {
+            "id": challenge_id,
+            "date": today,
+            "question": problem_data["question"],
+            "options": problem_data["options"],
+            "correct_answer": problem_data["correct_answer"],
+            "explanation": problem_data["explanation"],
+            "hint": problem_data.get("hint", "Think about the key concepts!"),
+            "grade": grade,
+            "topic": topic,
+            "difficulty": "hard",
+            "xp_reward": base_xp,
+            "bonus_xp": bonus_xp,
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        
+        await db.daily_challenges.insert_one(challenge_doc)
+        
+        return DailyChallenge(
+            id=challenge_id,
+            date=today,
+            question=problem_data["question"],
+            options=problem_data["options"],
+            correct_answer=problem_data["correct_answer"],
+            explanation=problem_data["explanation"],
+            hint=problem_data.get("hint", "Think about the key concepts!"),
+            grade=grade,
+            topic=topic,
+            difficulty="hard",
+            xp_reward=base_xp,
+            bonus_xp=bonus_xp,
+            completed=False,
+            user_answer=None,
+            was_correct=None
+        )
+        
+    except Exception as e:
+        logger.error(f"Error generating daily challenge: {e}")
+        raise HTTPException(status_code=500, detail="Failed to generate daily challenge")
+
+@api_router.post("/daily-challenge/answer", response_model=DailyChallengeResult)
+async def submit_daily_challenge_answer(answer: AnswerSubmit, current_user: dict = Depends(get_current_user)):
+    """Submit answer for today's daily challenge"""
+    today = get_today_date()
+    
+    # Check if already completed
+    user_daily = current_user.get("daily_challenges", {})
+    if user_daily.get(today, {}).get("completed"):
+        raise HTTPException(status_code=400, detail="You already completed today's challenge!")
+    
+    # Get the daily challenge
+    challenge = await db.daily_challenges.find_one({"date": today}, {"_id": 0})
+    if not challenge:
+        raise HTTPException(status_code=404, detail="Daily challenge not found")
+    
+    # Check answer
+    is_correct = answer.selected_answer == challenge["correct_answer"]
+    xp_earned = challenge["xp_reward"] if is_correct else 0
+    bonus_xp = challenge["bonus_xp"] if is_correct else 0
+    total_xp = xp_earned + bonus_xp
+    
+    # Update user's daily challenge record
+    yesterday = (datetime.now(timezone.utc) - timedelta(days=1)).strftime("%Y-%m-%d")
+    yesterday_completed = user_daily.get(yesterday, {}).get("completed", False) and user_daily.get(yesterday, {}).get("correct", False)
+    
+    # Calculate streak
+    current_streak = current_user.get("daily_streak", 0)
+    if is_correct:
+        if yesterday_completed or current_streak == 0:
+            new_streak = current_streak + 1
+        else:
+            new_streak = 1  # Start new streak
+    else:
+        new_streak = 0  # Reset streak on wrong answer
+    
+    # Update XP and level
+    new_xp = current_user.get("xp", 0) + total_xp
+    new_level = calculate_level(new_xp)
+    level_up = new_level > current_user.get("level", 1)
+    
+    # Update daily stats
+    daily_stats = current_user.get("daily_stats", {"total_completed": 0, "total_correct": 0, "longest_streak": 0})
+    daily_stats["total_completed"] = daily_stats.get("total_completed", 0) + 1
+    if is_correct:
+        daily_stats["total_correct"] = daily_stats.get("total_correct", 0) + 1
+    daily_stats["longest_streak"] = max(daily_stats.get("longest_streak", 0), new_streak)
+    daily_stats["last_completed_date"] = today
+    
+    # Update user document
+    user_daily[today] = {
+        "completed": True,
+        "correct": is_correct,
+        "user_answer": answer.selected_answer,
+        "xp_earned": total_xp,
+        "completed_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    update_data = {
+        "xp": new_xp,
+        "level": new_level,
+        "daily_streak": new_streak,
+        "daily_challenges": user_daily,
+        "daily_stats": daily_stats
+    }
+    
+    await db.users.update_one({"id": current_user["id"]}, {"$set": update_data})
+    
+    # Check for new badges
+    updated_user = {**current_user, **update_data}
+    new_badges = await check_daily_badges(updated_user, new_streak)
+    
+    if new_badges:
+        current_badges = current_user.get("badges", [])
+        await db.users.update_one(
+            {"id": current_user["id"]},
+            {"$set": {"badges": current_badges + new_badges}}
+        )
+    
+    return DailyChallengeResult(
+        correct=is_correct,
+        correct_answer=challenge["correct_answer"],
+        explanation=challenge["explanation"],
+        xp_earned=xp_earned,
+        bonus_xp_earned=bonus_xp,
+        total_xp_earned=total_xp,
+        new_total_xp=new_xp,
+        new_level=new_level,
+        level_up=level_up,
+        daily_streak=new_streak,
+        new_badges=new_badges
+    )
+
+async def check_daily_badges(user: dict, daily_streak: int) -> List[str]:
+    """Check for daily challenge specific badges"""
+    new_badges = []
+    current_badges = set(user.get("badges", []))
+    daily_stats = user.get("daily_stats", {})
+    
+    # Daily streak badges
+    if daily_streak >= 3 and "daily_streak_3" not in current_badges:
+        new_badges.append("daily_streak_3")
+    if daily_streak >= 7 and "daily_streak_7" not in current_badges:
+        new_badges.append("daily_streak_7")
+    if daily_streak >= 30 and "daily_streak_30" not in current_badges:
+        new_badges.append("daily_streak_30")
+    
+    # Daily completion badges
+    total_daily = daily_stats.get("total_completed", 0)
+    if total_daily >= 1 and "daily_first" not in current_badges:
+        new_badges.append("daily_first")
+    if total_daily >= 10 and "daily_10" not in current_badges:
+        new_badges.append("daily_10")
+    if total_daily >= 50 and "daily_50" not in current_badges:
+        new_badges.append("daily_50")
+    
+    return new_badges
+
+@api_router.get("/daily-challenge/stats", response_model=DailyStats)
+async def get_daily_stats(current_user: dict = Depends(get_current_user)):
+    """Get user's daily challenge statistics"""
+    daily_stats = current_user.get("daily_stats", {})
+    
+    return DailyStats(
+        current_streak=current_user.get("daily_streak", 0),
+        longest_streak=daily_stats.get("longest_streak", 0),
+        total_completed=daily_stats.get("total_completed", 0),
+        total_correct=daily_stats.get("total_correct", 0),
+        last_completed_date=daily_stats.get("last_completed_date")
+    )
+
 # ============== PRACTICE HISTORY ==============
 
 @api_router.get("/history", response_model=List[PracticeHistoryEntry])
