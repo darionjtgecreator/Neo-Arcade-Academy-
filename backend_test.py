@@ -526,7 +526,16 @@ class MathLearningAPITester:
         # Test grades and topics
         grade, topics = self.test_grades_and_topics()
         
-        # Test lesson endpoints (new feature)
+        # Test NEW FEATURES - Badges System (34 badges with categories)
+        self.test_badges_system()
+        
+        # Test NEW FEATURES - Mastery System
+        self.test_mastery_system()
+        
+        # Test NEW FEATURES - Adaptive Difficulty
+        self.test_adaptive_difficulty()
+        
+        # Test lesson endpoints
         if grade and topics:
             self.test_lessons(grade, topics)
         
@@ -534,11 +543,15 @@ class MathLearningAPITester:
         if grade and topics:
             self.test_problem_generation(grade, topics)
             
-        # Test hint system (new feature)
+        # Test NEW FEATURES - Enhanced answer submission with adaptive difficulty
+        if grade and topics:
+            self.test_enhanced_answer_submission(grade, topics)
+            
+        # Test hint system
         if grade and topics:
             self.test_hint_system(grade, topics)
         
-        # Test practice history (new feature)
+        # Test practice history
         self.test_practice_history()
         
         # Test progress and stats
