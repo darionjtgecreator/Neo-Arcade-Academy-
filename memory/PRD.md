@@ -125,8 +125,11 @@ Build an app that would teach 5th graders (12 years old) math from 1st grade all
 - `/api/mastery` - Get mastery levels for all topics
 - `/api/mastery/{topic}` - Get mastery for specific topic
 - `/api/adaptive-difficulty` - Get difficulty recommendation
-- `/api/badges` - Get all 34 badges with categories
+- `/api/badges` - Get all 40 badges with categories
 - `/api/leaderboard` - Get top players
+- `/api/daily-challenge` - Get today's daily challenge
+- `/api/daily-challenge/answer` - Submit daily challenge answer
+- `/api/daily-challenge/stats` - Get daily challenge statistics
 
 ## Prioritized Backlog
 
@@ -134,9 +137,10 @@ Build an app that would teach 5th graders (12 years old) math from 1st grade all
 - ✅ Interactive lessons/tutorials per topic
 - ✅ Practice history tracking
 - ✅ Hint system for problems
-- ✅ More diverse badges (34 total)
+- ✅ More diverse badges (40 total)
 - ✅ Adaptive difficulty based on performance
 - ✅ Topic mastery percentage tracking
+- ✅ Daily challenge system with bonus rewards
 
 ### P1 - High Priority
 - Grade completion tracking
