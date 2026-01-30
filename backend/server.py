@@ -121,6 +121,26 @@ class AnswerResult(BaseModel):
     new_level: int
     level_up: bool
     new_badges: List[str]
+    recommended_difficulty: str
+    difficulty_change_reason: Optional[str] = None
+
+class TopicMastery(BaseModel):
+    topic_id: str
+    topic_name: str
+    completed: int
+    correct: int
+    accuracy: float
+    mastery_level: str
+    mastery_percent: float
+    next_milestone: int
+
+class AdaptiveDifficultyRecommendation(BaseModel):
+    current_difficulty: str
+    recommended_difficulty: str
+    reason: str
+    recent_accuracy: float
+    recent_problems: int
+    confidence: str
 
 class LeaderboardEntry(BaseModel):
     rank: int
