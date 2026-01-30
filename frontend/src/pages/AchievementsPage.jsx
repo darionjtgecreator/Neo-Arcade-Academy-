@@ -69,7 +69,14 @@ const AchievementsPage = () => {
     early_bird: Sun,
     weekend_warrior: Calendar,
     topic_explorer: Compass,
-    grade_hopper: Layers
+    grade_hopper: Layers,
+    // Daily challenge badges
+    daily_first: Calendar,
+    daily_10: Calendar,
+    daily_50: Calendar,
+    daily_streak_3: Flame,
+    daily_streak_7: Flame,
+    daily_streak_30: Trophy
   };
 
   const categoryColors = {
@@ -80,7 +87,8 @@ const AchievementsPage = () => {
     difficulty: "from-red-500 to-rose-600",
     topic: "from-purple-500 to-violet-600",
     grade: "from-indigo-500 to-blue-600",
-    special: "from-pink-500 to-fuchsia-600"
+    special: "from-pink-500 to-fuchsia-600",
+    daily: "from-yellow-500 to-orange-600"
   };
 
   const categoryNames = {
@@ -91,7 +99,8 @@ const AchievementsPage = () => {
     difficulty: "Difficulty",
     topic: "Topic Mastery",
     grade: "Grade Completion",
-    special: "Special"
+    special: "Special",
+    daily: "Daily Challenges"
   };
 
   const categories = ["all", ...Object.keys(categoryNames)];
