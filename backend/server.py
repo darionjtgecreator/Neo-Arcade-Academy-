@@ -381,14 +381,16 @@ Respond in EXACTLY this JSON format (no markdown, no code blocks, just raw JSON)
     "question": "The math question text here",
     "options": ["A) option1", "B) option2", "C) option3", "D) option4"],
     "correct_answer": "A) option1",
-    "explanation": "Step-by-step explanation of how to solve the problem"
+    "explanation": "Step-by-step explanation of how to solve the problem",
+    "hint": "A helpful hint that guides the student without giving away the answer"
 }}
 
 Make sure:
 1. The question is clear and age-appropriate
 2. All 4 options are plausible (no obviously wrong answers)
 3. The explanation is detailed and educational
-4. Use proper math notation where needed"""
+4. The hint should help the student think about the approach without revealing the answer
+5. Use proper math notation where needed"""
 
     try:
         chat = LlmChat(
