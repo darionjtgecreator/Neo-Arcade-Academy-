@@ -472,7 +472,12 @@ async def submit_answer(answer: AnswerSubmit, current_user: dict = Depends(get_c
     # Update problem as answered
     await db.problems.update_one(
         {"id": answer.problem_id},
-        {"$set": {"answered": True, "user_answer": answer.selected_answer, "correct": is_correct}}
+        {"$set": {
+            "answered": True, 
+            "user_answer": answer.selected_answer, 
+            "correct": is_correct,
+            "answered_at": datetime.now(timezone.utc).isoformat()
+        }}
     )
     
     # Update user stats
