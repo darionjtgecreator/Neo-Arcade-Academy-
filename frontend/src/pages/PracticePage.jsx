@@ -243,6 +243,30 @@ const PracticePage = () => {
                 ))}
               </div>
 
+              {/* Hint Section - Only show before answering */}
+              {!result && problem.hint && (
+                <div className="mb-6">
+                  {!showHint ? (
+                    <button
+                      onClick={() => setShowHint(true)}
+                      className="flex items-center gap-2 text-secondary hover:text-secondary/80 transition-colors"
+                      data-testid="show-hint-btn"
+                    >
+                      <Lightbulb className="w-5 h-5" />
+                      <span className="font-medium">Need a hint?</span>
+                    </button>
+                  ) : (
+                    <div className="p-4 rounded-xl bg-secondary/10 border border-secondary/20 animate-slide-up" data-testid="hint-text">
+                      <div className="flex items-center gap-2 text-secondary font-medium mb-2">
+                        <Lightbulb className="w-4 h-4" />
+                        Hint
+                      </div>
+                      <p className="text-muted-foreground">{problem.hint}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Action Buttons */}
               {!result ? (
                 <Button
