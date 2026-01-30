@@ -79,36 +79,47 @@ Build an app that would teach 5th graders (12 years old) math from 1st grade all
 - Neo-Arcade themed UI (dark mode, neon colors)
 - Responsive design for all devices
 
+### January 2025 - Feature Update
+- **Interactive Lessons**: Each topic has comprehensive lesson content with Overview, Key Concepts, Examples, and Tips tabs
+- **Practice History**: Track all solved problems with detailed stats by topic and difficulty
+- **Hint System**: AI-generated hints for problems (revealed on demand without penalty)
+- **Navigation Update**: Added History link in nav bar, Learn/Practice buttons on topic cards
+
 ### API Endpoints
 - `/api/auth/register` - User registration
 - `/api/auth/login` - User login
 - `/api/auth/me` - Get current user
 - `/api/grades` - Get all grades
 - `/api/topics/{grade}` - Get topics for grade
-- `/api/problems/generate` - Generate AI problem
+- `/api/lessons/{grade}/{topic}` - Get interactive lesson content
+- `/api/problems/generate` - Generate AI problem with hint
 - `/api/problems/answer` - Submit answer
 - `/api/progress` - Get user progress
+- `/api/history` - Get practice history
+- `/api/history/stats` - Get detailed stats
 - `/api/badges` - Get all badges
 - `/api/leaderboard` - Get top players
 
 ## Prioritized Backlog
 
-### P0 - Critical (Next Sprint)
-- Interactive lessons/tutorials per topic
+### P0 - Critical (Completed)
+- ✅ Interactive lessons/tutorials per topic
+- ✅ Practice history tracking
+- ✅ Hint system for problems
 
 ### P1 - High Priority
-- Practice history view
-- Hint system for difficult problems
 - More badge types
+- Adaptive difficulty based on performance
+- Topic mastery tracking
 
 ### P2 - Medium Priority
 - Dark/Light mode toggle
 - Social features (challenges)
 - Parent dashboard
+- Sound effects for achievements
 
 ## Next Tasks
-1. Add interactive lessons for each topic
-2. Implement practice history tracking
-3. Add hint system for problems
-4. Create more diverse badges
-5. Add sound effects for achievements
+1. Add more diverse badges (topic-specific, difficulty-based)
+2. Implement adaptive difficulty that increases/decreases based on recent performance
+3. Add topic mastery percentage tracking
+4. Create parent/teacher dashboard view
