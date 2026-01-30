@@ -99,6 +99,43 @@ class PracticeHistoryEntry(BaseModel):
     xp_earned: int
     answered_at: str
 
+class DailyChallenge(BaseModel):
+    id: str
+    date: str
+    question: str
+    options: List[str]
+    correct_answer: str
+    explanation: str
+    hint: str
+    grade: int
+    topic: str
+    difficulty: str
+    xp_reward: int
+    bonus_xp: int
+    completed: bool = False
+    user_answer: Optional[str] = None
+    was_correct: Optional[bool] = None
+
+class DailyChallengeResult(BaseModel):
+    correct: bool
+    correct_answer: str
+    explanation: str
+    xp_earned: int
+    bonus_xp_earned: int
+    total_xp_earned: int
+    new_total_xp: int
+    new_level: int
+    level_up: bool
+    daily_streak: int
+    new_badges: List[str]
+
+class DailyStats(BaseModel):
+    current_streak: int
+    longest_streak: int
+    total_completed: int
+    total_correct: int
+    last_completed_date: Optional[str] = None
+
 class LessonContent(BaseModel):
     topic_id: str
     topic_name: str
