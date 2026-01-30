@@ -432,6 +432,48 @@ const PracticePage = () => {
           </div>
         )}
 
+        {/* Adaptive Difficulty Recommendation */}
+        {showDifficultyRecommendation && recommendedDifficulty && (
+          <div className="fixed bottom-4 right-4 z-50 animate-slide-up" data-testid="difficulty-recommendation">
+            <div className="glass p-4 rounded-2xl max-w-sm border border-primary/30">
+              <div className="flex items-start gap-3">
+                {recommendedDifficulty === "hard" || (recommendedDifficulty === "medium" && difficulty === "easy") ? (
+                  <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
+                    <TrendingUp className="w-5 h-5 text-green-500" />
+                  </div>
+                ) : (
+                  <div className="w-10 h-10 rounded-full bg-yellow-500/20 flex items-center justify-center flex-shrink-0">
+                    <TrendingDown className="w-5 h-5 text-yellow-500" />
+                  </div>
+                )}
+                <div className="flex-1">
+                  <h4 className="font-bold text-sm mb-1">Difficulty Suggestion</h4>
+                  <p className="text-xs text-muted-foreground mb-3">{difficultyReason}</p>
+                  <div className="flex gap-2">
+                    <Button 
+                      size="sm" 
+                      className="btn-primary text-xs px-3 py-1"
+                      onClick={handleAcceptDifficultyChange}
+                      data-testid="accept-difficulty-btn"
+                    >
+                      Try {recommendedDifficulty}
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="ghost"
+                      className="text-xs px-3 py-1"
+                      onClick={() => setShowDifficultyRecommendation(false)}
+                      data-testid="dismiss-difficulty-btn"
+                    >
+                      Keep {difficulty}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Quick Stats */}
         <div className="mt-6 grid grid-cols-3 gap-4">
           <div className="stat-card text-center">
