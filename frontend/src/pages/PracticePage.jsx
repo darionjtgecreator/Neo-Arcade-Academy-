@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { 
   ChevronLeft, ChevronRight, Zap, Check, X, 
   Lightbulb, RefreshCw, Award, Flame, Star,
-  ArrowRight, Trophy, Sparkles
+  ArrowRight, Trophy, Sparkles, TrendingUp, TrendingDown
 } from "lucide-react";
 
 const PracticePage = () => {
@@ -27,6 +27,9 @@ const PracticePage = () => {
   const [streak, setStreak] = useState(0);
   const [levelUp, setLevelUp] = useState(false);
   const [newBadges, setNewBadges] = useState([]);
+  const [recommendedDifficulty, setRecommendedDifficulty] = useState(null);
+  const [difficultyReason, setDifficultyReason] = useState(null);
+  const [showDifficultyRecommendation, setShowDifficultyRecommendation] = useState(false);
 
   const topicNames = {
     counting: "Counting",
