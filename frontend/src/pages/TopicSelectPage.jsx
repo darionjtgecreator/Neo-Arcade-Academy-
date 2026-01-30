@@ -6,7 +6,8 @@ import axios from "axios";
 import { 
   ChevronRight, ChevronLeft, Calculator, Shapes, 
   FileText, TrendingUp, Divide, Percent, Variable,
-  Triangle, PieChart, Sigma, Infinity, BarChart
+  Triangle, PieChart, Sigma, Infinity, BarChart,
+  BookOpen, Play
 } from "lucide-react";
 
 const TopicSelectPage = () => {
@@ -147,36 +148,42 @@ const TopicSelectPage = () => {
             const description = topicDescriptions[topic.id] || "Practice this topic";
             
             return (
-              <Link
+              <div
                 key={topic.id}
-                to={`/practice/${grade}/${topic.id}`}
-                className="group"
+                className="topic-card h-full"
                 data-testid={`topic-${topic.id}-card`}
               >
-                <div className="topic-card h-full">
-                  <div className="flex items-start gap-4">
-                    <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center flex-shrink-0 shadow-lg`}>
-                      <Icon className="w-7 h-7 text-white" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-lg font-bold mb-1">{topic.name}</h3>
-                      <p className="text-sm text-muted-foreground line-clamp-2">
-                        {description}
-                      </p>
-                    </div>
+                <div className="flex items-start gap-4">
+                  <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center flex-shrink-0 shadow-lg`}>
+                    <Icon className="w-7 h-7 text-white" />
                   </div>
-                  
-                  <div className="flex items-center justify-between mt-4 pt-4 border-t border-border/50">
-                    <span className="text-sm text-muted-foreground">
-                      Grade {grade} Level
-                    </span>
-                    <div className="flex items-center text-primary font-medium text-sm group-hover:gap-2 transition-all">
-                      <span>Practice</span>
-                      <ChevronRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
-                    </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-lg font-bold mb-1">{topic.name}</h3>
+                    <p className="text-sm text-muted-foreground line-clamp-2">
+                      {description}
+                    </p>
                   </div>
                 </div>
-              </Link>
+                
+                <div className="flex items-center justify-between mt-4 pt-4 border-t border-border/50 gap-2">
+                  <Link 
+                    to={`/lesson/${grade}/${topic.id}`}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted text-sm font-medium hover:bg-muted/80 transition-colors"
+                    data-testid={`lesson-${topic.id}-btn`}
+                  >
+                    <BookOpen className="w-4 h-4" />
+                    Learn
+                  </Link>
+                  <Link 
+                    to={`/practice/${grade}/${topic.id}`}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary text-white text-sm font-medium hover:bg-primary/90 transition-colors"
+                    data-testid={`practice-${topic.id}-btn`}
+                  >
+                    <Play className="w-4 h-4" />
+                    Practice
+                  </Link>
+                </div>
+              </div>
             );
           })}
         </div>
