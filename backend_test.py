@@ -183,6 +183,106 @@ class MathLearningAPITester:
         else:
             print("   ❌ Problem generation failed")
 
+    def test_lessons(self, grade=5, topics=None):
+        """Test lesson endpoints"""
+        print("\n🔍 Testing Lesson Endpoints...")
+        
+        if not topics or len(topics) == 0:
+            print("   ⚠️ No topics available for lesson testing")
+            return
+        
+        # Use first available topic for lesson testing
+        test_topic = topics[0]['id']
+        
+        # Test get lesson content
+        lesson_response = self.run_test(f"Get Lesson Content (Grade {grade}, Topic: {test_topic})", 
+                                      "GET", f"lessons/{grade}/{test_topic}", 200)
+        
+        if lesson_response:
+            print(f"   📝 Lesson topic: {lesson_response.get('topic_name', 'N/A')}")
+            print(f"   📝 Overview length: {len(lesson_response.get('overview', ''))}")
+            print(f"   📝 Key concepts: {len(lesson_response.get('key_concepts', []))}")
+            print(f"   📝 Examples: {len(lesson_response.get('examples', []))}")
+            print(f"   📝 Tips: {len(lesson_response.get('tips', []))}")
+            
+            # Validate lesson structure
+            required_fields = ['topic_id', 'topic_name', 'grade', 'overview', 'key_concepts', 'examples', 'tips']
+            missing_fields = [field for field in required_fields if field not in lesson_response]
+            if missing_fields:
+                print(f"   ⚠️ Missing lesson fields: {missing_fields}")
+            else:
+                print("   ✅ Lesson structure is complete")
+
+    def test_practice_history(self):
+        """Test practice history endpoints"""
+        print("\n🔍 Testing Practice History...")
+        
+        # Test get practice history
+        history_response = self.run_test("Get Practice History", "GET", "history?limit=20", 200)
+        
+        if history_response and isinstance(history_response, list):
+            print(f"   📝 Found {len(history_response)} history entries")
+            
+            if len(history_response) > 0:
+                # Check first entry structure
+                entry = history_response[0]
+                required_fields = ['id', 'question', 'topic', 'grade', 'difficulty', 'correct', 'user_answer', 'correct_answer', 'xp_earned', 'answered_at']
+                missing_fields = [field for field in required_fields if field not in entry]
+                if missing_fields:
+                    print(f"   ⚠️ Missing history entry fields: {missing_fields}")
+                else:
+                    print("   ✅ History entry structure is complete")
+        
+        # Test get history statistics
+        stats_response = self.run_test("Get History Statistics", "GET", "history/stats", 200)
+        
+        if stats_response:
+            print(f"   📝 Total problems in stats: {stats_response.get('total_problems', 0)}")
+            print(f"   📝 Accuracy: {stats_response.get('accuracy', 0)}%")
+            
+            # Check stats structure
+            required_fields = ['total_problems', 'correct_answers', 'accuracy', 'topic_stats', 'difficulty_stats']
+            missing_fields = [field for field in required_fields if field not in stats_response]
+            if missing_fields:
+                print(f"   ⚠️ Missing stats fields: {missing_fields}")
+            else:
+                print("   ✅ History stats structure is complete")
+
+    def test_hint_system(self, grade=5, topics=None):
+        """Test hint system in problem generation"""
+        print("\n🔍 Testing Hint System...")
+        
+        if not topics or len(topics) == 0:
+            print("   ⚠️ No topics available for hint testing")
+            return
+        
+        # Use first available topic
+        test_topic = topics[0]['id']
+        
+        # Test problem generation with hint
+        problem_data = {
+            "grade": grade,
+            "topic": test_topic,
+            "difficulty": "medium"
+        }
+        
+        print(f"   🎯 Generating problem to test hint system")
+        problem_response = self.run_test("Generate Problem with Hint", "POST", "problems/generate", 200, problem_data)
+        
+        if problem_response:
+            # Check if hint field is present
+            if 'hint' in problem_response:
+                hint_text = problem_response['hint']
+                print(f"   📝 Hint present: {len(hint_text)} characters")
+                print(f"   📝 Hint preview: {hint_text[:100]}...")
+                
+                if len(hint_text) > 10:  # Basic validation that hint has content
+                    print("   ✅ Hint system working correctly")
+                else:
+                    print("   ⚠️ Hint seems too short or empty")
+            else:
+                print("   ❌ Hint field missing from problem response")
+
     def test_progress_and_stats(self):
         """Test progress and statistics endpoints"""
         print("\n🔍 Testing Progress & Stats...")
