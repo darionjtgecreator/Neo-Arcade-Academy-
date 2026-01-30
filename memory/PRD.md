@@ -86,7 +86,7 @@ Build an app that would teach 5th graders (12 years old) math from 1st grade all
 - **Navigation Update**: Added History link in nav bar, Learn/Practice buttons on topic cards
 
 ### January 2025 - Feature Update v2
-- **34 Achievement Badges**: Expanded from 12 to 34 badges across 8 categories:
+- **34 → 40 Achievement Badges**: Expanded badges across 9 categories:
   - Milestone (problems completed)
   - Streak (consecutive correct answers)
   - Level (XP-based levels)
@@ -95,12 +95,20 @@ Build an app that would teach 5th graders (12 years old) math from 1st grade all
   - Topic (mastering specific topics)
   - Grade (completing all topics in a grade)
   - Special (time-based, exploration)
+  - **Daily** (daily challenge specific)
 - **Topic Mastery Tracking**: 5 mastery levels (Novice → Beginner → Intermediate → Advanced → Master) based on problems completed and accuracy
-- **Adaptive Difficulty**: AI-powered difficulty recommendations based on recent performance:
-  - Recommends harder problems when doing well (85%+ accuracy)
-  - Recommends easier problems when struggling (40%- accuracy)
-  - Shows recommendation popup after answering
-- **Mastery Page**: New page showing mastery level for all topics with progress visualization
+- **Adaptive Difficulty**: AI-powered difficulty recommendations based on recent performance
+- **Mastery Page**: New page showing mastery level for all topics
+
+### January 2025 - Daily Challenge Feature
+- **Daily Challenge System**: Unique AI-generated challenge each day
+  - Harder difficulty for extra challenge
+  - 50 base XP + 25 bonus XP reward
+  - Deterministic topic/grade selection based on date
+- **Daily Streak Tracking**: Track consecutive days of completion
+- **6 Daily Challenge Badges**: First challenge, 10/50 completions, 3/7/30-day streaks
+- **Dashboard Integration**: Prominent Daily Challenge card with status
+- **New Navigation**: Daily link in nav bar
 
 ### API Endpoints
 - `/api/auth/register` - User registration
