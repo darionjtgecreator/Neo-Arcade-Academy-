@@ -594,6 +594,267 @@ async def update_current_grade(grade: int, current_user: dict = Depends(get_curr
     await db.users.update_one({"id": current_user["id"]}, {"$set": {"current_grade": grade}})
     return {"success": True, "current_grade": grade}
 
+# ============== PRACTICE HISTORY ==============
+
+@api_router.get("/history", response_model=List[PracticeHistoryEntry])
+async def get_practice_history(limit: int = 20, current_user: dict = Depends(get_current_user)):
+    """Get user's practice history"""
+    problems = await db.problems.find(
+        {"user_id": current_user["id"], "answered": True},
+        {"_id": 0}
+    ).sort("created_at", -1).limit(limit).to_list(limit)
+    
+    history = []
+    for p in problems:
+        history.append(PracticeHistoryEntry(
+            id=p["id"],
+            question=p["question"],
+            topic=p["topic"],
+            grade=p["grade"],
+            difficulty=p["difficulty"],
+            correct=p.get("correct", False),
+            user_answer=p.get("user_answer", ""),
+            correct_answer=p["correct_answer"],
+            xp_earned=p["xp_reward"] if p.get("correct", False) else 0,
+            answered_at=p.get("answered_at", p["created_at"])
+        ))
+    
+    return history
+
+@api_router.get("/history/stats")
+async def get_history_stats(current_user: dict = Depends(get_current_user)):
+    """Get practice history statistics"""
+    all_problems = await db.problems.find(
+        {"user_id": current_user["id"], "answered": True},
+        {"_id": 0}
+    ).to_list(1000)
+    
+    total = len(all_problems)
+    correct = sum(1 for p in all_problems if p.get("correct", False))
+    
+    # Stats by topic
+    topic_stats = {}
+    for p in all_problems:
+        topic = p["topic"]
+        if topic not in topic_stats:
+            topic_stats[topic] = {"total": 0, "correct": 0}
+        topic_stats[topic]["total"] += 1
+        if p.get("correct", False):
+            topic_stats[topic]["correct"] += 1
+    
+    # Stats by difficulty
+    difficulty_stats = {"easy": {"total": 0, "correct": 0}, "medium": {"total": 0, "correct": 0}, "hard": {"total": 0, "correct": 0}}
+    for p in all_problems:
+        diff = p.get("difficulty", "medium")
+        if diff in difficulty_stats:
+            difficulty_stats[diff]["total"] += 1
+            if p.get("correct", False):
+                difficulty_stats[diff]["correct"] += 1
+    
+    return {
+        "total_problems": total,
+        "correct_answers": correct,
+        "accuracy": round((correct / total * 100) if total > 0 else 0, 1),
+        "topic_stats": topic_stats,
+        "difficulty_stats": difficulty_stats
+    }
+
+# ============== LESSONS ==============
+
+LESSON_CONTENT = {
+    "counting": {
+        "overview": "Counting is the foundation of all math! Learn to count objects, recognize numbers, and understand number sequences.",
+        "key_concepts": [
+            {"title": "Number Recognition", "content": "Numbers are symbols that represent quantities. 1, 2, 3, 4, 5... each number is one more than the previous."},
+            {"title": "Counting Objects", "content": "Point to each object and say one number at a time. The last number you say is the total count."},
+            {"title": "Number Order", "content": "Numbers have a specific order. We count up (1, 2, 3...) and can count down (10, 9, 8...)."}
+        ],
+        "examples": [
+            {"problem": "Count the apples: 🍎🍎🍎🍎🍎", "solution": "Point and count: 1, 2, 3, 4, 5. There are 5 apples!"},
+            {"problem": "What comes after 7?", "solution": "7, then 8. The answer is 8!"}
+        ],
+        "tips": ["Use your fingers to help count", "Touch each object as you count", "Practice counting everyday things around you"]
+    },
+    "addition": {
+        "overview": "Addition is combining groups of things together to find a total. The symbol '+' means 'plus' or 'add'.",
+        "key_concepts": [
+            {"title": "Adding Numbers", "content": "When we add, we put groups together. 3 + 2 means 'start with 3 and add 2 more' which equals 5."},
+            {"title": "Order Doesn't Matter", "content": "3 + 2 gives the same answer as 2 + 3. This is called the commutative property!"},
+            {"title": "Adding Zero", "content": "Adding 0 to any number gives you the same number. 5 + 0 = 5."}
+        ],
+        "examples": [
+            {"problem": "5 + 3 = ?", "solution": "Start with 5, count up 3 more: 6, 7, 8. So 5 + 3 = 8"},
+            {"problem": "7 + 4 = ?", "solution": "7 + 4 = 11. You can think of it as 7 + 3 = 10, then +1 more = 11"}
+        ],
+        "tips": ["Draw dots or use objects to visualize", "Learn your number bonds (pairs that make 10)", "Practice mental math daily"]
+    },
+    "subtraction": {
+        "overview": "Subtraction is taking away from a group or finding the difference between two numbers. The symbol '-' means 'minus' or 'subtract'.",
+        "key_concepts": [
+            {"title": "Taking Away", "content": "8 - 3 means 'start with 8 and take away 3'. You're left with 5."},
+            {"title": "Finding Difference", "content": "Subtraction also helps find how many more or less. How much more is 7 than 4? 7 - 4 = 3"},
+            {"title": "Subtracting Zero", "content": "Taking away 0 leaves the number unchanged. 9 - 0 = 9."}
+        ],
+        "examples": [
+            {"problem": "10 - 4 = ?", "solution": "Start at 10, count back 4: 9, 8, 7, 6. So 10 - 4 = 6"},
+            {"problem": "15 - 7 = ?", "solution": "15 - 5 = 10, then 10 - 2 = 8. So 15 - 7 = 8"}
+        ],
+        "tips": ["Think of subtraction as 'counting backwards'", "Use a number line to visualize", "Check your answer by adding back"]
+    },
+    "multiplication": {
+        "overview": "Multiplication is repeated addition. It's a faster way to add the same number multiple times. The symbol '×' means 'times'.",
+        "key_concepts": [
+            {"title": "Groups Of", "content": "3 × 4 means '3 groups of 4' which equals 12. It's the same as 4 + 4 + 4."},
+            {"title": "Times Tables", "content": "Memorizing times tables (1-12) makes multiplication fast and easy."},
+            {"title": "Multiplying by 1 and 0", "content": "Any number × 1 = itself. Any number × 0 = 0."}
+        ],
+        "examples": [
+            {"problem": "6 × 7 = ?", "solution": "6 × 7 = 42. Remember: 6 groups of 7, or 7 groups of 6."},
+            {"problem": "8 × 9 = ?", "solution": "8 × 9 = 72. Trick: 8 × 9 = 8 × 10 - 8 = 80 - 8 = 72"}
+        ],
+        "tips": ["Learn times tables through songs and games", "Use arrays (rows and columns) to visualize", "Look for patterns in multiplication"]
+    },
+    "division": {
+        "overview": "Division is splitting a number into equal groups or finding how many times one number fits into another. The symbol '÷' means 'divided by'.",
+        "key_concepts": [
+            {"title": "Equal Groups", "content": "12 ÷ 3 asks 'how many groups of 3 are in 12?' The answer is 4."},
+            {"title": "Sharing Equally", "content": "Division also means sharing. 15 cookies among 5 friends = 3 cookies each."},
+            {"title": "Remainders", "content": "Sometimes division doesn't split evenly. 13 ÷ 4 = 3 remainder 1."}
+        ],
+        "examples": [
+            {"problem": "24 ÷ 6 = ?", "solution": "How many 6s fit in 24? Count: 6, 12, 18, 24. That's 4 times!"},
+            {"problem": "45 ÷ 9 = ?", "solution": "Think: what × 9 = 45? Answer: 5 × 9 = 45, so 45 ÷ 9 = 5"}
+        ],
+        "tips": ["Division is the opposite of multiplication", "Use multiplication facts to help divide", "Check by multiplying your answer"]
+    },
+    "fractions": {
+        "overview": "Fractions represent parts of a whole. The top number (numerator) shows how many parts you have, and the bottom number (denominator) shows how many equal parts make the whole.",
+        "key_concepts": [
+            {"title": "Reading Fractions", "content": "1/2 is 'one half' - the whole is split into 2 parts and we have 1. 3/4 is 'three fourths'."},
+            {"title": "Equivalent Fractions", "content": "1/2 = 2/4 = 4/8. Different fractions can represent the same amount."},
+            {"title": "Comparing Fractions", "content": "Same denominator: compare numerators. 3/5 > 2/5. Different: find common denominator first."}
+        ],
+        "examples": [
+            {"problem": "Add 1/4 + 2/4", "solution": "Same denominator, so add numerators: 1 + 2 = 3. Answer: 3/4"},
+            {"problem": "Simplify 6/8", "solution": "Divide both by 2: 6÷2 = 3, 8÷2 = 4. So 6/8 = 3/4"}
+        ],
+        "tips": ["Visualize with pie charts or bars", "Always look for common factors to simplify", "Convert to same denominator before adding/subtracting"]
+    },
+    "geometry": {
+        "overview": "Geometry is the study of shapes, sizes, angles, and the properties of space. It helps us understand the world around us!",
+        "key_concepts": [
+            {"title": "2D Shapes", "content": "Flat shapes like triangles (3 sides), squares (4 equal sides), rectangles, circles, and polygons."},
+            {"title": "3D Shapes", "content": "Solid shapes like cubes, spheres, cylinders, cones, and pyramids have length, width, AND height."},
+            {"title": "Angles", "content": "Angles measure turns. Right angle = 90°, acute < 90°, obtuse > 90°, straight = 180°."}
+        ],
+        "examples": [
+            {"problem": "Find the area of a rectangle with length 8 and width 5", "solution": "Area = length × width = 8 × 5 = 40 square units"},
+            {"problem": "A triangle has angles of 60° and 70°. What's the third angle?", "solution": "Triangle angles sum to 180°. 180 - 60 - 70 = 50°"}
+        ],
+        "tips": ["Draw diagrams to visualize problems", "Memorize formulas for area and perimeter", "Look for shapes in everyday objects"]
+    },
+    "algebra": {
+        "overview": "Algebra uses letters (variables) to represent unknown numbers. It helps us solve problems and find patterns.",
+        "key_concepts": [
+            {"title": "Variables", "content": "Letters like x, y, n represent unknown values. In 'x + 5 = 12', x represents a number we need to find."},
+            {"title": "Solving Equations", "content": "Do the same operation to both sides to isolate the variable. x + 5 = 12 → x = 12 - 5 = 7"},
+            {"title": "Expressions", "content": "Algebraic expressions like '3x + 2' combine numbers and variables with operations."}
+        ],
+        "examples": [
+            {"problem": "Solve: 2x + 6 = 14", "solution": "Subtract 6: 2x = 8. Divide by 2: x = 4. Check: 2(4) + 6 = 14 ✓"},
+            {"problem": "Simplify: 3x + 2x - 4", "solution": "Combine like terms: 3x + 2x = 5x. Answer: 5x - 4"}
+        ],
+        "tips": ["Always do the same operation to both sides", "Combine like terms first", "Check your answer by substituting back"]
+    },
+    "trigonometry": {
+        "overview": "Trigonometry studies relationships between angles and sides in triangles. It's essential for physics, engineering, and navigation!",
+        "key_concepts": [
+            {"title": "SOH-CAH-TOA", "content": "Sin = Opposite/Hypotenuse, Cos = Adjacent/Hypotenuse, Tan = Opposite/Adjacent. This helps find missing sides and angles."},
+            {"title": "Right Triangles", "content": "The hypotenuse is the longest side (opposite the right angle). Pythagorean theorem: a² + b² = c²"},
+            {"title": "Unit Circle", "content": "A circle with radius 1 centered at origin. Helps understand trig functions for any angle."}
+        ],
+        "examples": [
+            {"problem": "Find sin(30°)", "solution": "sin(30°) = 1/2 = 0.5. This is a standard angle to memorize!"},
+            {"problem": "Right triangle with legs 3 and 4, find hypotenuse", "solution": "c² = 3² + 4² = 9 + 16 = 25. c = √25 = 5"}
+        ],
+        "tips": ["Memorize SOH-CAH-TOA", "Learn the special triangles (30-60-90 and 45-45-90)", "Use calculator for non-standard angles"]
+    },
+    "calculus": {
+        "overview": "Calculus is the mathematics of change and motion. It has two main branches: differentiation (rates of change) and integration (accumulation).",
+        "key_concepts": [
+            {"title": "Derivatives", "content": "The derivative measures how fast something changes. If f(x) = x², then f'(x) = 2x tells us the rate of change."},
+            {"title": "Integrals", "content": "Integration is the reverse of differentiation. It finds the area under a curve and accumulates quantities."},
+            {"title": "Limits", "content": "Limits describe what happens as we approach a value. They're the foundation of calculus."}
+        ],
+        "examples": [
+            {"problem": "Find the derivative of f(x) = x³", "solution": "Use power rule: f'(x) = 3x². Bring down the power and reduce by 1."},
+            {"problem": "Find ∫2x dx", "solution": "Reverse power rule: ∫2x dx = x² + C (don't forget the constant!)"}
+        ],
+        "tips": ["Master algebra before tackling calculus", "Understand what derivatives and integrals mean conceptually", "Practice the power rule until it's automatic"]
+    },
+    "word_problems": {
+        "overview": "Word problems apply math to real-world situations. The key is translating words into mathematical expressions and equations.",
+        "key_concepts": [
+            {"title": "Read Carefully", "content": "Identify what's given and what you need to find. Underline important numbers and keywords."},
+            {"title": "Key Words", "content": "'Total' often means add, 'difference' means subtract, 'times' or 'product' means multiply, 'per' or 'each' often means divide."},
+            {"title": "Write an Equation", "content": "Turn the word problem into a math equation, then solve step by step."}
+        ],
+        "examples": [
+            {"problem": "Sarah has 24 cookies. She gives 1/3 to her brother. How many does she have left?", "solution": "1/3 of 24 = 24 ÷ 3 = 8 cookies given away. 24 - 8 = 16 cookies left."},
+            {"problem": "A train travels 60 mph for 2.5 hours. How far does it go?", "solution": "Distance = Speed × Time = 60 × 2.5 = 150 miles"}
+        ],
+        "tips": ["Draw pictures or diagrams", "Identify the operation needed", "Always check if your answer makes sense"]
+    },
+    "statistics": {
+        "overview": "Statistics is the science of collecting, organizing, and analyzing data to understand patterns and make predictions.",
+        "key_concepts": [
+            {"title": "Mean (Average)", "content": "Add all values and divide by how many there are. Mean of 2,4,6,8 = 20÷4 = 5"},
+            {"title": "Median", "content": "The middle value when data is ordered. For 1,3,5,7,9 the median is 5."},
+            {"title": "Mode", "content": "The most frequent value. In 2,3,3,4,5, the mode is 3."}
+        ],
+        "examples": [
+            {"problem": "Find the mean of: 10, 15, 20, 25, 30", "solution": "Sum = 100. Count = 5. Mean = 100 ÷ 5 = 20"},
+            {"problem": "Find median of: 7, 2, 9, 4, 5", "solution": "Order: 2,4,5,7,9. Middle value = 5"}
+        ],
+        "tips": ["Always order data before finding median", "A data set can have multiple modes or no mode", "Mean is affected by outliers, median is not"]
+    }
+}
+
+# Add content for remaining topics with default structure
+DEFAULT_LESSON = {
+    "overview": "This topic covers important mathematical concepts. Practice regularly to master these skills!",
+    "key_concepts": [
+        {"title": "Core Concept", "content": "Understanding the fundamentals is key to success in this topic."},
+        {"title": "Problem Solving", "content": "Apply logical thinking and step-by-step approaches to solve problems."},
+        {"title": "Practice", "content": "Regular practice helps reinforce learning and builds confidence."}
+    ],
+    "examples": [
+        {"problem": "Practice Problem", "solution": "Work through problems step by step, checking each calculation."}
+    ],
+    "tips": ["Read problems carefully", "Show your work", "Check your answers"]
+}
+
+@api_router.get("/lessons/{grade}/{topic}", response_model=LessonContent)
+async def get_lesson(grade: int, topic: str, current_user: dict = Depends(get_current_user)):
+    """Get lesson content for a specific topic"""
+    if grade < 1 or grade > 12:
+        raise HTTPException(status_code=400, detail="Grade must be between 1 and 12")
+    
+    topic_name = TOPIC_DISPLAY_NAMES.get(topic, topic.replace("_", " ").title())
+    
+    # Get lesson content or use default
+    content = LESSON_CONTENT.get(topic, DEFAULT_LESSON)
+    
+    return LessonContent(
+        topic_id=topic,
+        topic_name=topic_name,
+        grade=grade,
+        overview=content["overview"],
+        key_concepts=content["key_concepts"],
+        examples=content["examples"],
+        tips=content["tips"]
+    )
+
 # ============== BASE ROUTES ==============
 
 @api_router.get("/")
