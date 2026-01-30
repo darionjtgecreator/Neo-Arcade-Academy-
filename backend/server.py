@@ -205,6 +205,67 @@ def get_xp_reward(difficulty: str, grade: int) -> int:
     grade_bonus = grade * 2
     return base_xp + grade_bonus
 
+def calculate_adaptive_difficulty(recent_results: List[dict], current_difficulty: str) -> tuple:
+    """Calculate recommended difficulty based on recent performance"""
+    if len(recent_results) < 3:
+        return current_difficulty, None
+    
+    # Get results from same difficulty level
+    same_diff_results = [r for r in recent_results if r.get("difficulty") == current_difficulty]
+    
+    if len(same_diff_results) < 3:
+        # Not enough data at current difficulty, use all recent
+        correct_count = sum(1 for r in recent_results[-5:] if r.get("correct"))
+        total = min(5, len(recent_results))
+    else:
+        # Use last 5 results at current difficulty
+        same_diff_results = same_diff_results[-5:]
+        correct_count = sum(1 for r in same_diff_results if r.get("correct"))
+        total = len(same_diff_results)
+    
+    accuracy = (correct_count / total) * 100 if total > 0 else 0
+    
+    difficulty_levels = ["easy", "medium", "hard"]
+    current_index = difficulty_levels.index(current_difficulty) if current_difficulty in difficulty_levels else 1
+    
+    # Recommend difficulty change based on accuracy
+    if accuracy >= 85 and current_index < 2:
+        # Doing great, suggest harder
+        new_difficulty = difficulty_levels[current_index + 1]
+        reason = f"Great job! You got {correct_count}/{total} correct. Ready for a bigger challenge?"
+        return new_difficulty, reason
+    elif accuracy <= 40 and current_index > 0:
+        # Struggling, suggest easier
+        new_difficulty = difficulty_levels[current_index - 1]
+        reason = f"Let's build up your skills. Try some easier problems first."
+        return new_difficulty, reason
+    
+    return current_difficulty, None
+
+def calculate_mastery_level(completed: int, correct: int) -> tuple:
+    """Calculate mastery level and percentage for a topic"""
+    if completed == 0:
+        return "Not Started", 0.0
+    
+    accuracy = (correct / completed) * 100
+    
+    # Calculate mastery percentage (combination of accuracy and volume)
+    # Max mastery at 50+ problems with 90%+ accuracy
+    volume_score = min(completed / 50, 1.0) * 40  # Up to 40 points for volume
+    accuracy_score = min(accuracy / 90, 1.0) * 60  # Up to 60 points for accuracy
+    mastery_percent = volume_score + accuracy_score
+    
+    if mastery_percent >= 90:
+        return "Master", mastery_percent
+    elif mastery_percent >= 70:
+        return "Advanced", mastery_percent
+    elif mastery_percent >= 40:
+        return "Intermediate", mastery_percent
+    elif mastery_percent >= 15:
+        return "Beginner", mastery_percent
+    else:
+        return "Novice", mastery_percent
+
 BADGE_DEFINITIONS = {
     # Milestone badges
     "first_step": {"name": "First Step", "description": "Complete your first problem", "icon": "footprints", "category": "milestone"},
