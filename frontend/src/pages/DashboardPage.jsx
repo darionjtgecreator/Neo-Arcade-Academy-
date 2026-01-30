@@ -143,6 +143,52 @@ const DashboardPage = () => {
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Left Column - Actions */}
           <div className="lg:col-span-2 space-y-6">
+            {/* Daily Challenge Card */}
+            {dailyChallenge && (
+              <div className="card-game p-6 relative overflow-hidden border-2 border-yellow-500/30">
+                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-yellow-500 via-orange-500 to-red-500"></div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-yellow-500 to-orange-600 flex items-center justify-center animate-pulse-glow">
+                      <Calendar className="w-7 h-7 text-white" />
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-bold flex items-center gap-2">
+                        Daily Challenge
+                        {!dailyChallenge.completed && (
+                          <span className="px-2 py-0.5 rounded-full bg-yellow-500/20 text-yellow-500 text-xs font-medium">NEW</span>
+                        )}
+                      </h2>
+                      <p className="text-sm text-muted-foreground">
+                        {dailyChallenge.completed 
+                          ? `Completed! ${dailyChallenge.was_correct ? '✓ Correct' : '✗ Incorrect'}`
+                          : `Earn ${dailyChallenge.xp_reward + dailyChallenge.bonus_xp} XP with bonus!`
+                        }
+                      </p>
+                    </div>
+                  </div>
+                  <Link to="/daily-challenge">
+                    <Button 
+                      className={dailyChallenge.completed ? "btn-secondary" : "btn-primary glow-primary"}
+                      data-testid="daily-challenge-btn"
+                    >
+                      {dailyChallenge.completed ? (
+                        <span className="flex items-center gap-2">
+                          View Results
+                          <ChevronRight className="w-4 h-4" />
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-2">
+                          <Gift className="w-4 h-4" />
+                          Play Now
+                        </span>
+                      )}
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            )}
+
             {/* Quick Start */}
             <div className="card-game p-6">
               <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
