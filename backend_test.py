@@ -683,8 +683,11 @@ class MathLearningAPITester:
         # Test grades and topics
         grade, topics = self.test_grades_and_topics()
         
-        # Test NEW FEATURES - Badges System (34 badges with categories)
+        # Test NEW FEATURES - Badges System (40 badges with categories including daily)
         self.test_badges_system()
+        
+        # Test NEW FEATURES - Daily Challenge System
+        self.test_daily_challenge_system()
         
         # Test NEW FEATURES - Mastery System
         self.test_mastery_system()
