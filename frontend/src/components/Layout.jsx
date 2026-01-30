@@ -2,7 +2,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../App";
 import { 
   Home, Trophy, Medal, User, LogOut, Zap, Flame, 
-  BookOpen, Target, ChevronRight, Menu, X, History 
+  BookOpen, Target, ChevronRight, Menu, X, History, BarChart3 
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "./ui/button";
@@ -16,10 +16,10 @@ export const Layout = ({ children }) => {
   const navItems = [
     { path: "/dashboard", label: "Dashboard", icon: Home },
     { path: "/grades", label: "Practice", icon: BookOpen },
+    { path: "/mastery", label: "Mastery", icon: BarChart3 },
     { path: "/history", label: "History", icon: History },
     { path: "/achievements", label: "Badges", icon: Medal },
     { path: "/leaderboard", label: "Leaderboard", icon: Trophy },
-    { path: "/profile", label: "Profile", icon: User },
   ];
 
   const handleLogout = () => {
