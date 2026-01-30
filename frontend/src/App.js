@@ -18,6 +18,7 @@ import ProfilePage from "./pages/ProfilePage";
 import LessonPage from "./pages/LessonPage";
 import HistoryPage from "./pages/HistoryPage";
 import MasteryPage from "./pages/MasteryPage";
+import DailyChallengePage from "./pages/DailyChallengePage";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 export const API = `${BACKEND_URL}/api`;
@@ -147,6 +148,7 @@ function App() {
           <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
           <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
           <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+          <Route path="/daily-challenge" element={<ProtectedRoute><DailyChallengePage /></ProtectedRoute>} />
           <Route path="/grades" element={<ProtectedRoute><GradeSelectPage /></ProtectedRoute>} />
           <Route path="/topics/:grade" element={<ProtectedRoute><TopicSelectPage /></ProtectedRoute>} />
           <Route path="/lesson/:grade/:topic" element={<ProtectedRoute><LessonPage /></ProtectedRoute>} />
