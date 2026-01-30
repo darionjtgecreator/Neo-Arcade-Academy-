@@ -337,9 +337,20 @@ class MathLearningAPITester:
         # Test grades and topics
         grade, topics = self.test_grades_and_topics()
         
+        # Test lesson endpoints (new feature)
+        if grade and topics:
+            self.test_lessons(grade, topics)
+        
         # Test problem generation (if we have topics)
         if grade and topics:
             self.test_problem_generation(grade, topics)
+            
+        # Test hint system (new feature)
+        if grade and topics:
+            self.test_hint_system(grade, topics)
+        
+        # Test practice history (new feature)
+        self.test_practice_history()
         
         # Test progress and stats
         self.test_progress_and_stats()
