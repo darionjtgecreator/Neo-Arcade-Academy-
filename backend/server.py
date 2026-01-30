@@ -624,21 +624,51 @@ async def submit_answer(answer: AnswerSubmit, current_user: dict = Depends(get_c
     if is_correct:
         grade_progress[grade_key]["correct"] += 1
     
+    # Update difficulty stats for badges
+    difficulty_stats = current_user.get("difficulty_stats", {})
+    diff = problem.get("difficulty", "medium")
+    if diff not in difficulty_stats:
+        difficulty_stats[diff] = {"completed": 0, "correct": 0}
+    difficulty_stats[diff]["completed"] += 1
+    if is_correct:
+        difficulty_stats[diff]["correct"] += 1
+    
+    # Track hard streak
+    hard_streak = current_user.get("hard_streak", 0)
+    if diff == "hard" and is_correct:
+        hard_streak += 1
+    elif diff == "hard" and not is_correct:
+        hard_streak = 0
+    
+    # Track recent performance for adaptive difficulty
+    recent_results = current_user.get("recent_results", [])
+    recent_results.append({
+        "correct": is_correct,
+        "difficulty": diff,
+        "topic": topic,
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    })
+    # Keep only last 10 results
+    recent_results = recent_results[-10:]
+    
     update_data = {
         "xp": new_xp,
         "level": new_level,
         "streak": new_streak,
+        "hard_streak": hard_streak,
         "completed_problems": current_user.get("completed_problems", 0) + 1,
         "correct_answers": current_user.get("correct_answers", 0) + (1 if is_correct else 0),
         "topic_progress": topic_progress,
-        "grade_progress": grade_progress
+        "grade_progress": grade_progress,
+        "difficulty_stats": difficulty_stats,
+        "recent_results": recent_results
     }
     
     await db.users.update_one({"id": current_user["id"]}, {"$set": update_data})
     
     # Check for new badges
     updated_user = {**current_user, **update_data}
-    new_badges = await check_and_award_badges(updated_user)
+    new_badges = await check_and_award_badges(updated_user, problem)
     
     if new_badges:
         current_badges = current_user.get("badges", [])
@@ -646,6 +676,9 @@ async def submit_answer(answer: AnswerSubmit, current_user: dict = Depends(get_c
             {"id": current_user["id"]},
             {"$set": {"badges": current_badges + new_badges}}
         )
+    
+    # Calculate recommended difficulty based on recent performance
+    recommended_difficulty, difficulty_reason = calculate_adaptive_difficulty(recent_results, diff)
     
     return AnswerResult(
         correct=is_correct,
@@ -655,7 +688,9 @@ async def submit_answer(answer: AnswerSubmit, current_user: dict = Depends(get_c
         new_total_xp=new_xp,
         new_level=new_level,
         level_up=level_up,
-        new_badges=new_badges
+        new_badges=new_badges,
+        recommended_difficulty=recommended_difficulty,
+        difficulty_change_reason=difficulty_reason if recommended_difficulty != diff else None
     )
 
 # ============== PROGRESS & STATS ==============
