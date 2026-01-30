@@ -186,18 +186,55 @@ def get_xp_reward(difficulty: str, grade: int) -> int:
     return base_xp + grade_bonus
 
 BADGE_DEFINITIONS = {
-    "first_step": {"name": "First Step", "description": "Complete your first problem", "icon": "footprints"},
-    "streak_3": {"name": "On Fire!", "description": "Get 3 correct answers in a row", "icon": "flame"},
-    "streak_5": {"name": "Unstoppable!", "description": "Get 5 correct answers in a row", "icon": "zap"},
-    "streak_10": {"name": "Math Master!", "description": "Get 10 correct answers in a row", "icon": "crown"},
-    "level_5": {"name": "Rising Star", "description": "Reach level 5", "icon": "star"},
-    "level_10": {"name": "Math Wizard", "description": "Reach level 10", "icon": "wand"},
-    "problems_10": {"name": "Getting Started", "description": "Complete 10 problems", "icon": "target"},
-    "problems_50": {"name": "Problem Solver", "description": "Complete 50 problems", "icon": "brain"},
-    "problems_100": {"name": "Math Champion", "description": "Complete 100 problems", "icon": "trophy"},
-    "accuracy_80": {"name": "Sharp Mind", "description": "Achieve 80% accuracy", "icon": "check-circle"},
-    "geometry_master": {"name": "Geometry Pro", "description": "Complete 20 geometry problems", "icon": "triangle"},
-    "calculus_master": {"name": "Calculus Pro", "description": "Complete 20 calculus problems", "icon": "infinity"},
+    # Milestone badges
+    "first_step": {"name": "First Step", "description": "Complete your first problem", "icon": "footprints", "category": "milestone"},
+    "problems_10": {"name": "Getting Started", "description": "Complete 10 problems", "icon": "target", "category": "milestone"},
+    "problems_50": {"name": "Problem Solver", "description": "Complete 50 problems", "icon": "brain", "category": "milestone"},
+    "problems_100": {"name": "Math Champion", "description": "Complete 100 problems", "icon": "trophy", "category": "milestone"},
+    "problems_500": {"name": "Math Legend", "description": "Complete 500 problems", "icon": "medal", "category": "milestone"},
+    
+    # Streak badges
+    "streak_3": {"name": "On Fire!", "description": "Get 3 correct answers in a row", "icon": "flame", "category": "streak"},
+    "streak_5": {"name": "Unstoppable!", "description": "Get 5 correct answers in a row", "icon": "zap", "category": "streak"},
+    "streak_10": {"name": "Math Master!", "description": "Get 10 correct answers in a row", "icon": "crown", "category": "streak"},
+    "streak_25": {"name": "Perfectionist!", "description": "Get 25 correct answers in a row", "icon": "sparkles", "category": "streak"},
+    
+    # Level badges
+    "level_5": {"name": "Rising Star", "description": "Reach level 5", "icon": "star", "category": "level"},
+    "level_10": {"name": "Math Wizard", "description": "Reach level 10", "icon": "wand", "category": "level"},
+    "level_20": {"name": "Math Genius", "description": "Reach level 20", "icon": "graduation-cap", "category": "level"},
+    
+    # Accuracy badges
+    "accuracy_80": {"name": "Sharp Mind", "description": "Achieve 80% accuracy (min 10 problems)", "icon": "check-circle", "category": "accuracy"},
+    "accuracy_90": {"name": "Precision Master", "description": "Achieve 90% accuracy (min 20 problems)", "icon": "bullseye", "category": "accuracy"},
+    "accuracy_95": {"name": "Near Perfect", "description": "Achieve 95% accuracy (min 50 problems)", "icon": "crosshair", "category": "accuracy"},
+    
+    # Difficulty badges
+    "easy_master": {"name": "Foundation Builder", "description": "Complete 30 easy problems", "icon": "building", "category": "difficulty"},
+    "medium_master": {"name": "Challenge Seeker", "description": "Complete 30 medium problems", "icon": "mountain", "category": "difficulty"},
+    "hard_master": {"name": "Difficulty Crusher", "description": "Complete 20 hard problems", "icon": "dumbbell", "category": "difficulty"},
+    "hard_streak_5": {"name": "Fearless", "description": "Get 5 hard problems correct in a row", "icon": "shield", "category": "difficulty"},
+    
+    # Topic mastery badges
+    "geometry_master": {"name": "Geometry Pro", "description": "Master geometry (80%+ accuracy, 20+ problems)", "icon": "triangle", "category": "topic"},
+    "algebra_master": {"name": "Algebra Pro", "description": "Master algebra (80%+ accuracy, 20+ problems)", "icon": "variable", "category": "topic"},
+    "calculus_master": {"name": "Calculus Pro", "description": "Master calculus (80%+ accuracy, 20+ problems)", "icon": "infinity", "category": "topic"},
+    "trigonometry_master": {"name": "Trig Pro", "description": "Master trigonometry (80%+ accuracy, 20+ problems)", "icon": "ruler", "category": "topic"},
+    "word_problems_master": {"name": "Word Wizard", "description": "Master word problems (80%+ accuracy, 20+ problems)", "icon": "file-text", "category": "topic"},
+    "statistics_master": {"name": "Stats Pro", "description": "Master statistics (80%+ accuracy, 20+ problems)", "icon": "bar-chart", "category": "topic"},
+    "fractions_master": {"name": "Fractions Pro", "description": "Master fractions (80%+ accuracy, 20+ problems)", "icon": "pie-chart", "category": "topic"},
+    
+    # Grade completion badges
+    "grade_1_complete": {"name": "Grade 1 Graduate", "description": "Complete all Grade 1 topics", "icon": "award", "category": "grade"},
+    "grade_5_complete": {"name": "Grade 5 Graduate", "description": "Complete all Grade 5 topics", "icon": "award", "category": "grade"},
+    "grade_12_complete": {"name": "High School Graduate", "description": "Complete all Grade 12 topics", "icon": "graduation-cap", "category": "grade"},
+    
+    # Special badges
+    "night_owl": {"name": "Night Owl", "description": "Practice after 10 PM", "icon": "moon", "category": "special"},
+    "early_bird": {"name": "Early Bird", "description": "Practice before 7 AM", "icon": "sun", "category": "special"},
+    "weekend_warrior": {"name": "Weekend Warrior", "description": "Practice on weekends", "icon": "calendar", "category": "special"},
+    "topic_explorer": {"name": "Topic Explorer", "description": "Try 10 different topics", "icon": "compass", "category": "special"},
+    "grade_hopper": {"name": "Grade Hopper", "description": "Practice in 5 different grades", "icon": "layers", "category": "special"},
 }
 
 async def check_and_award_badges(user: dict) -> List[str]:
