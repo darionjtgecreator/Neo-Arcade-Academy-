@@ -237,7 +237,7 @@ BADGE_DEFINITIONS = {
     "grade_hopper": {"name": "Grade Hopper", "description": "Practice in 5 different grades", "icon": "layers", "category": "special"},
 }
 
-async def check_and_award_badges(user: dict) -> List[str]:
+async def check_and_award_badges(user: dict, problem_data: dict = None) -> List[str]:
     """Check if user earned any new badges"""
     new_badges = []
     current_badges = set(user.get("badges", []))
@@ -254,6 +254,8 @@ async def check_and_award_badges(user: dict) -> List[str]:
         new_badges.append("streak_5")
     if streak >= 10 and "streak_10" not in current_badges:
         new_badges.append("streak_10")
+    if streak >= 25 and "streak_25" not in current_badges:
+        new_badges.append("streak_25")
     
     # Level badges
     level = user.get("level", 1)
@@ -261,6 +263,8 @@ async def check_and_award_badges(user: dict) -> List[str]:
         new_badges.append("level_5")
     if level >= 10 and "level_10" not in current_badges:
         new_badges.append("level_10")
+    if level >= 20 and "level_20" not in current_badges:
+        new_badges.append("level_20")
     
     # Problem count badges
     problems = user.get("completed_problems", 0)
@@ -270,19 +274,78 @@ async def check_and_award_badges(user: dict) -> List[str]:
         new_badges.append("problems_50")
     if problems >= 100 and "problems_100" not in current_badges:
         new_badges.append("problems_100")
+    if problems >= 500 and "problems_500" not in current_badges:
+        new_badges.append("problems_500")
     
-    # Accuracy badge
+    # Accuracy badges
     if problems >= 10:
         accuracy = (user.get("correct_answers", 0) / problems) * 100
         if accuracy >= 80 and "accuracy_80" not in current_badges:
             new_badges.append("accuracy_80")
+        if accuracy >= 90 and problems >= 20 and "accuracy_90" not in current_badges:
+            new_badges.append("accuracy_90")
+        if accuracy >= 95 and problems >= 50 and "accuracy_95" not in current_badges:
+            new_badges.append("accuracy_95")
     
-    # Topic badges
+    # Difficulty badges
+    difficulty_stats = user.get("difficulty_stats", {})
+    easy_count = difficulty_stats.get("easy", {}).get("completed", 0)
+    medium_count = difficulty_stats.get("medium", {}).get("completed", 0)
+    hard_count = difficulty_stats.get("hard", {}).get("completed", 0)
+    hard_streak = user.get("hard_streak", 0)
+    
+    if easy_count >= 30 and "easy_master" not in current_badges:
+        new_badges.append("easy_master")
+    if medium_count >= 30 and "medium_master" not in current_badges:
+        new_badges.append("medium_master")
+    if hard_count >= 20 and "hard_master" not in current_badges:
+        new_badges.append("hard_master")
+    if hard_streak >= 5 and "hard_streak_5" not in current_badges:
+        new_badges.append("hard_streak_5")
+    
+    # Topic mastery badges (80%+ accuracy with 20+ problems)
     topic_progress = user.get("topic_progress", {})
-    if topic_progress.get("geometry", {}).get("completed", 0) >= 20 and "geometry_master" not in current_badges:
-        new_badges.append("geometry_master")
-    if topic_progress.get("calculus", {}).get("completed", 0) >= 20 and "calculus_master" not in current_badges:
-        new_badges.append("calculus_master")
+    topic_badge_map = {
+        "geometry": "geometry_master",
+        "algebra": "algebra_master",
+        "calculus": "calculus_master",
+        "trigonometry": "trigonometry_master",
+        "word_problems": "word_problems_master",
+        "statistics": "statistics_master",
+        "fractions": "fractions_master"
+    }
+    
+    for topic, badge_id in topic_badge_map.items():
+        tp = topic_progress.get(topic, {})
+        completed = tp.get("completed", 0)
+        correct = tp.get("correct", 0)
+        if completed >= 20 and badge_id not in current_badges:
+            topic_accuracy = (correct / completed * 100) if completed > 0 else 0
+            if topic_accuracy >= 80:
+                new_badges.append(badge_id)
+    
+    # Explorer badges
+    topics_tried = len([t for t in topic_progress if topic_progress[t].get("completed", 0) > 0])
+    grades_tried = len([g for g in user.get("grade_progress", {}) if user["grade_progress"][g].get("completed", 0) > 0])
+    
+    if topics_tried >= 10 and "topic_explorer" not in current_badges:
+        new_badges.append("topic_explorer")
+    if grades_tried >= 5 and "grade_hopper" not in current_badges:
+        new_badges.append("grade_hopper")
+    
+    # Time-based badges (check current time)
+    current_hour = datetime.now(timezone.utc).hour
+    if current_hour >= 22 or current_hour < 5:
+        if "night_owl" not in current_badges:
+            new_badges.append("night_owl")
+    if current_hour >= 5 and current_hour < 7:
+        if "early_bird" not in current_badges:
+            new_badges.append("early_bird")
+    
+    # Weekend badge
+    if datetime.now(timezone.utc).weekday() >= 5:  # Saturday or Sunday
+        if "weekend_warrior" not in current_badges:
+            new_badges.append("weekend_warrior")
     
     return new_badges
 
