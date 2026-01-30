@@ -518,6 +518,116 @@ class MathLearningAPITester:
         else:
             print("   ❌ Problem generation failed for enhanced answer testing")
 
+    def test_daily_challenge_system(self):
+        """Test Daily Challenge feature comprehensively"""
+        print("\n🔍 Testing Daily Challenge System...")
+        
+        # Test 1: Get Daily Challenge
+        print("   🎯 Testing Daily Challenge API...")
+        challenge_response = self.run_test("Get Daily Challenge", "GET", "daily-challenge", 200)
+        
+        if challenge_response:
+            # Validate challenge structure
+            required_fields = ['id', 'date', 'question', 'options', 'correct_answer', 'explanation', 'hint', 'grade', 'topic', 'difficulty', 'xp_reward', 'bonus_xp', 'completed']
+            missing_fields = [field for field in required_fields if field not in challenge_response]
+            
+            if missing_fields:
+                print(f"   ⚠️ Daily challenge missing fields: {missing_fields}")
+            else:
+                print("   ✅ Daily challenge structure is complete")
+            
+            print(f"   📝 Challenge ID: {challenge_response.get('id')}")
+            print(f"   📝 Date: {challenge_response.get('date')}")
+            print(f"   📝 Topic: {challenge_response.get('topic')}")
+            print(f"   📝 Grade: {challenge_response.get('grade')}")
+            print(f"   📝 Difficulty: {challenge_response.get('difficulty')}")
+            print(f"   📝 XP Reward: {challenge_response.get('xp_reward')}")
+            print(f"   📝 Bonus XP: {challenge_response.get('bonus_xp')}")
+            print(f"   📝 Completed: {challenge_response.get('completed')}")
+            
+            # Validate XP rewards
+            xp_reward = challenge_response.get('xp_reward', 0)
+            bonus_xp = challenge_response.get('bonus_xp', 0)
+            
+            if xp_reward >= 50 and bonus_xp >= 25:
+                print("   ✅ XP rewards meet requirements (50 base + 25 bonus)")
+            else:
+                print(f"   ⚠️ XP rewards below expected (50+25): {xp_reward}+{bonus_xp}")
+            
+            # Test 2: Daily Challenge Stats
+            print("   📊 Testing Daily Challenge Stats...")
+            stats_response = self.run_test("Get Daily Challenge Stats", "GET", "daily-challenge/stats", 200)
+            
+            if stats_response:
+                required_stats_fields = ['current_streak', 'longest_streak', 'total_completed', 'total_correct']
+                missing_stats_fields = [field for field in required_stats_fields if field not in stats_response]
+                
+                if missing_stats_fields:
+                    print(f"   ⚠️ Daily stats missing fields: {missing_stats_fields}")
+                else:
+                    print("   ✅ Daily challenge stats structure is complete")
+                
+                print(f"   📝 Current Streak: {stats_response.get('current_streak')}")
+                print(f"   📝 Longest Streak: {stats_response.get('longest_streak')}")
+                print(f"   📝 Total Completed: {stats_response.get('total_completed')}")
+                print(f"   📝 Total Correct: {stats_response.get('total_correct')}")
+            
+            # Test 3: Answer Submission (only if not completed)
+            if not challenge_response.get('completed', False):
+                print("   ✍️ Testing Daily Challenge Answer Submission...")
+                
+                # Submit first option as answer
+                first_option = challenge_response.get('options', ['A) Test'])[0]
+                answer_data = {
+                    "problem_id": challenge_response['id'],
+                    "selected_answer": first_option
+                }
+                
+                answer_response = self.run_test("Submit Daily Challenge Answer", "POST", "daily-challenge/answer", 200, answer_data)
+                
+                if answer_response:
+                    required_answer_fields = ['correct', 'correct_answer', 'explanation', 'xp_earned', 'bonus_xp_earned', 'total_xp_earned', 'new_total_xp', 'new_level', 'level_up', 'daily_streak', 'new_badges']
+                    missing_answer_fields = [field for field in required_answer_fields if field not in answer_response]
+                    
+                    if missing_answer_fields:
+                        print(f"   ⚠️ Answer response missing fields: {missing_answer_fields}")
+                    else:
+                        print("   ✅ Daily challenge answer response structure is complete")
+                    
+                    print(f"   📝 Answer Correct: {answer_response.get('correct')}")
+                    print(f"   📝 XP Earned: {answer_response.get('xp_earned')}")
+                    print(f"   📝 Bonus XP Earned: {answer_response.get('bonus_xp_earned')}")
+                    print(f"   📝 Total XP Earned: {answer_response.get('total_xp_earned')}")
+                    print(f"   📝 Daily Streak: {answer_response.get('daily_streak')}")
+                    print(f"   📝 New Badges: {len(answer_response.get('new_badges', []))}")
+                    
+                    # Validate XP calculation
+                    expected_total = (answer_response.get('xp_earned', 0) + answer_response.get('bonus_xp_earned', 0))
+                    actual_total = answer_response.get('total_xp_earned', 0)
+                    
+                    if expected_total == actual_total:
+                        print("   ✅ XP calculation is correct")
+                    else:
+                        print(f"   ⚠️ XP calculation mismatch: expected {expected_total}, got {actual_total}")
+                
+                # Test stats again after submission
+                print("   📊 Re-testing stats after submission...")
+                updated_stats = self.run_test("Get Updated Daily Challenge Stats", "GET", "daily-challenge/stats", 200)
+                
+                if updated_stats and stats_response:
+                    # Check if stats were updated
+                    old_completed = stats_response.get('total_completed', 0)
+                    new_completed = updated_stats.get('total_completed', 0)
+                    
+                    if new_completed > old_completed:
+                        print("   ✅ Stats updated correctly after submission")
+                    else:
+                        print("   ⚠️ Stats may not have updated after submission")
+            else:
+                print("   ⏭️ Skipping answer submission (challenge already completed)")
+        else:
+            print("   ❌ Failed to get daily challenge")
+
     def test_progress_and_stats(self):
         """Test progress and statistics endpoints"""
         print("\n🔍 Testing Progress & Stats...")
