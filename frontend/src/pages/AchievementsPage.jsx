@@ -1,17 +1,23 @@
 import { useState, useEffect } from "react";
 import { useAuth, API } from "../App";
 import Layout from "../components/Layout";
+import { Progress } from "../components/ui/progress";
 import axios from "axios";
 import { 
   Award, Star, Flame, Target, Brain, Trophy, 
   CheckCircle, Crown, Wand, Zap, Footprints,
-  Triangle, Infinity, Lock
+  Triangle, Infinity, Lock, Medal, Sparkles,
+  GraduationCap, Crosshair, Building, Mountain,
+  Dumbbell, Shield, Variable, Ruler, FileText,
+  BarChart, PieChart, Moon, Sun, Calendar,
+  Compass, Layers
 } from "lucide-react";
 
 const AchievementsPage = () => {
   const { token } = useAuth();
   const [badges, setBadges] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activeCategory, setActiveCategory] = useState("all");
 
   useEffect(() => {
     const fetchBadges = async () => {
@@ -31,33 +37,68 @@ const AchievementsPage = () => {
 
   const badgeIcons = {
     first_step: Footprints,
-    streak_3: Flame,
-    streak_5: Zap,
-    streak_10: Crown,
-    level_5: Star,
-    level_10: Wand,
     problems_10: Target,
     problems_50: Brain,
     problems_100: Trophy,
+    problems_500: Medal,
+    streak_3: Flame,
+    streak_5: Zap,
+    streak_10: Crown,
+    streak_25: Sparkles,
+    level_5: Star,
+    level_10: Wand,
+    level_20: GraduationCap,
     accuracy_80: CheckCircle,
+    accuracy_90: Target,
+    accuracy_95: Crosshair,
+    easy_master: Building,
+    medium_master: Mountain,
+    hard_master: Dumbbell,
+    hard_streak_5: Shield,
     geometry_master: Triangle,
-    calculus_master: Infinity
+    algebra_master: Variable,
+    calculus_master: Infinity,
+    trigonometry_master: Ruler,
+    word_problems_master: FileText,
+    statistics_master: BarChart,
+    fractions_master: PieChart,
+    grade_1_complete: Award,
+    grade_5_complete: Award,
+    grade_12_complete: GraduationCap,
+    night_owl: Moon,
+    early_bird: Sun,
+    weekend_warrior: Calendar,
+    topic_explorer: Compass,
+    grade_hopper: Layers
   };
 
-  const badgeColors = {
-    first_step: "from-green-500 to-emerald-600",
-    streak_3: "from-orange-500 to-amber-600",
-    streak_5: "from-yellow-500 to-orange-600",
-    streak_10: "from-amber-500 to-yellow-600",
-    level_5: "from-blue-500 to-cyan-600",
-    level_10: "from-purple-500 to-violet-600",
-    problems_10: "from-teal-500 to-cyan-600",
-    problems_50: "from-pink-500 to-fuchsia-600",
-    problems_100: "from-rose-500 to-red-600",
-    accuracy_80: "from-lime-500 to-green-600",
-    geometry_master: "from-indigo-500 to-blue-600",
-    calculus_master: "from-fuchsia-500 to-purple-600"
+  const categoryColors = {
+    milestone: "from-green-500 to-emerald-600",
+    streak: "from-orange-500 to-amber-600",
+    level: "from-blue-500 to-cyan-600",
+    accuracy: "from-lime-500 to-green-600",
+    difficulty: "from-red-500 to-rose-600",
+    topic: "from-purple-500 to-violet-600",
+    grade: "from-indigo-500 to-blue-600",
+    special: "from-pink-500 to-fuchsia-600"
   };
+
+  const categoryNames = {
+    milestone: "Milestones",
+    streak: "Streaks",
+    level: "Levels",
+    accuracy: "Accuracy",
+    difficulty: "Difficulty",
+    topic: "Topic Mastery",
+    grade: "Grade Completion",
+    special: "Special"
+  };
+
+  const categories = ["all", ...Object.keys(categoryNames)];
+
+  const filteredBadges = activeCategory === "all" 
+    ? badges 
+    : badges.filter(b => b.category === activeCategory);
 
   const earnedCount = badges.filter(b => b.earned).length;
   const totalCount = badges.length;
@@ -101,19 +142,38 @@ const AchievementsPage = () => {
             </div>
           </div>
           
-          <div className="progress-bar">
-            <div 
-              className="progress-bar-fill" 
-              style={{ width: `${progressPercent}%` }}
-            ></div>
-          </div>
+          <Progress value={progressPercent} className="h-3" />
+        </div>
+
+        {/* Category Filter */}
+        <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
+          {categories.map((category) => (
+            <button
+              key={category}
+              onClick={() => setActiveCategory(category)}
+              className={`px-4 py-2 rounded-full font-medium whitespace-nowrap transition-colors ${
+                activeCategory === category
+                  ? "bg-primary text-white"
+                  : "bg-muted text-muted-foreground hover:text-foreground"
+              }`}
+              data-testid={`category-${category}`}
+            >
+              {category === "all" ? "All Badges" : categoryNames[category]}
+              {category !== "all" && (
+                <span className="ml-1 text-xs opacity-70">
+                  ({badges.filter(b => b.category === category && b.earned).length}/
+                  {badges.filter(b => b.category === category).length})
+                </span>
+              )}
+            </button>
+          ))}
         </div>
 
         {/* Badges Grid */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {badges.map((badge) => {
+          {filteredBadges.map((badge) => {
             const Icon = badgeIcons[badge.id] || Award;
-            const gradient = badgeColors[badge.id] || "from-primary to-secondary";
+            const gradient = categoryColors[badge.category] || "from-primary to-secondary";
             
             return (
               <div
@@ -144,6 +204,9 @@ const AchievementsPage = () => {
                   <div className="text-center">
                     <h3 className="font-bold text-lg mb-1">{badge.name}</h3>
                     <p className="text-sm text-muted-foreground">{badge.description}</p>
+                    <div className="mt-2 text-xs text-muted-foreground capitalize">
+                      {categoryNames[badge.category] || badge.category}
+                    </div>
                   </div>
 
                   {/* Earned Status */}
@@ -159,6 +222,16 @@ const AchievementsPage = () => {
           })}
         </div>
 
+        {filteredBadges.length === 0 && (
+          <div className="text-center py-16">
+            <Award className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-30" />
+            <h3 className="text-xl font-bold mb-2">No badges in this category</h3>
+            <p className="text-muted-foreground">
+              Try selecting a different category.
+            </p>
+          </div>
+        )}
+
         {/* Motivation Section */}
         <div className="mt-12 glass p-6 rounded-2xl">
           <div className="flex items-start gap-4">
@@ -172,9 +245,11 @@ const AchievementsPage = () => {
                   ? "Start solving problems to earn your first badge! Every journey begins with a single step."
                   : earnedCount < 5
                   ? "You're making great progress! Keep solving problems to unlock more badges."
-                  : earnedCount < 10
+                  : earnedCount < 15
                   ? "Impressive collection! You're becoming a true math champion."
-                  : "Amazing! You're a badge collector extraordinaire. Keep pushing your limits!"
+                  : earnedCount < 25
+                  ? "Amazing progress! You're well on your way to becoming a badge master."
+                  : "Incredible! You're a badge collector extraordinaire. Keep pushing your limits!"
                 }
               </p>
             </div>
