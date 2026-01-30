@@ -774,6 +774,141 @@ async def get_progress(current_user: dict = Depends(get_current_user)):
         topic_progress=current_user.get("topic_progress", {})
     )
 
+@api_router.get("/mastery", response_model=List[TopicMastery])
+async def get_topic_mastery(current_user: dict = Depends(get_current_user)):
+    """Get mastery levels for all topics"""
+    topic_progress = current_user.get("topic_progress", {})
+    mastery_list = []
+    
+    # All available topics
+    all_topics = list(TOPIC_DISPLAY_NAMES.keys())
+    
+    for topic_id in all_topics:
+        tp = topic_progress.get(topic_id, {"completed": 0, "correct": 0})
+        completed = tp.get("completed", 0)
+        correct = tp.get("correct", 0)
+        accuracy = round((correct / completed * 100) if completed > 0 else 0, 1)
+        
+        mastery_level, mastery_percent = calculate_mastery_level(completed, correct)
+        
+        # Calculate next milestone
+        if completed < 5:
+            next_milestone = 5
+        elif completed < 10:
+            next_milestone = 10
+        elif completed < 20:
+            next_milestone = 20
+        elif completed < 50:
+            next_milestone = 50
+        else:
+            next_milestone = 100
+        
+        mastery_list.append(TopicMastery(
+            topic_id=topic_id,
+            topic_name=TOPIC_DISPLAY_NAMES.get(topic_id, topic_id),
+            completed=completed,
+            correct=correct,
+            accuracy=accuracy,
+            mastery_level=mastery_level,
+            mastery_percent=round(mastery_percent, 1),
+            next_milestone=next_milestone
+        ))
+    
+    # Sort by mastery percentage descending
+    mastery_list.sort(key=lambda x: x.mastery_percent, reverse=True)
+    
+    return mastery_list
+
+@api_router.get("/mastery/{topic}", response_model=TopicMastery)
+async def get_single_topic_mastery(topic: str, current_user: dict = Depends(get_current_user)):
+    """Get mastery level for a specific topic"""
+    topic_progress = current_user.get("topic_progress", {})
+    tp = topic_progress.get(topic, {"completed": 0, "correct": 0})
+    
+    completed = tp.get("completed", 0)
+    correct = tp.get("correct", 0)
+    accuracy = round((correct / completed * 100) if completed > 0 else 0, 1)
+    
+    mastery_level, mastery_percent = calculate_mastery_level(completed, correct)
+    
+    if completed < 5:
+        next_milestone = 5
+    elif completed < 10:
+        next_milestone = 10
+    elif completed < 20:
+        next_milestone = 20
+    elif completed < 50:
+        next_milestone = 50
+    else:
+        next_milestone = 100
+    
+    return TopicMastery(
+        topic_id=topic,
+        topic_name=TOPIC_DISPLAY_NAMES.get(topic, topic),
+        completed=completed,
+        correct=correct,
+        accuracy=accuracy,
+        mastery_level=mastery_level,
+        mastery_percent=round(mastery_percent, 1),
+        next_milestone=next_milestone
+    )
+
+@api_router.get("/adaptive-difficulty", response_model=AdaptiveDifficultyRecommendation)
+async def get_adaptive_difficulty(topic: str = None, current_user: dict = Depends(get_current_user)):
+    """Get recommended difficulty based on recent performance"""
+    recent_results = current_user.get("recent_results", [])
+    
+    # Filter by topic if specified
+    if topic:
+        topic_results = [r for r in recent_results if r.get("topic") == topic]
+        if len(topic_results) >= 3:
+            recent_results = topic_results
+    
+    if len(recent_results) < 3:
+        return AdaptiveDifficultyRecommendation(
+            current_difficulty="medium",
+            recommended_difficulty="medium",
+            reason="Not enough data yet. Complete more problems to get personalized recommendations.",
+            recent_accuracy=0,
+            recent_problems=len(recent_results),
+            confidence="low"
+        )
+    
+    # Calculate recent accuracy
+    recent_5 = recent_results[-5:]
+    correct_count = sum(1 for r in recent_5 if r.get("correct"))
+    recent_accuracy = (correct_count / len(recent_5)) * 100
+    
+    # Determine current difficulty from recent problems
+    difficulty_counts = {}
+    for r in recent_5:
+        d = r.get("difficulty", "medium")
+        difficulty_counts[d] = difficulty_counts.get(d, 0) + 1
+    current_difficulty = max(difficulty_counts, key=difficulty_counts.get) if difficulty_counts else "medium"
+    
+    # Get recommendation
+    recommended, reason = calculate_adaptive_difficulty(recent_results, current_difficulty)
+    
+    # Determine confidence
+    confidence = "high" if len(recent_results) >= 8 else "medium" if len(recent_results) >= 5 else "low"
+    
+    if not reason:
+        if recent_accuracy >= 70:
+            reason = f"You're doing well with {recent_accuracy:.0f}% accuracy. Keep it up!"
+        elif recent_accuracy >= 50:
+            reason = f"Good progress with {recent_accuracy:.0f}% accuracy. Practice makes perfect!"
+        else:
+            reason = f"Keep practicing! Accuracy at {recent_accuracy:.0f}%. You'll improve with more practice."
+    
+    return AdaptiveDifficultyRecommendation(
+        current_difficulty=current_difficulty,
+        recommended_difficulty=recommended,
+        reason=reason,
+        recent_accuracy=round(recent_accuracy, 1),
+        recent_problems=len(recent_results),
+        confidence=confidence
+    )
+
 @api_router.get("/badges")
 async def get_all_badges(current_user: dict = Depends(get_current_user)):
     """Get all badge definitions with user's earned status"""
