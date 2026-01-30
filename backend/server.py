@@ -920,6 +920,7 @@ async def get_all_badges(current_user: dict = Depends(get_current_user)):
             "name": badge_info["name"],
             "description": badge_info["description"],
             "icon": badge_info["icon"],
+            "category": badge_info.get("category", "general"),
             "earned": badge_id in user_badges
         })
     return badges
