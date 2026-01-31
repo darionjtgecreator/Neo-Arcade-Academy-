@@ -23,7 +23,7 @@ client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
 # JWT Configuration
-JWT_SECRET = os.environ.get('JWT_SECRET', 'neo-arcade-academy-secret')
+JWT_SECRET = os.environ['JWT_SECRET']
 JWT_ALGORITHM = "HS256"
 
 # Create the main app without a prefix
@@ -1298,9 +1298,10 @@ async def get_practice_history(limit: int = 20, current_user: dict = Depends(get
 @api_router.get("/history/stats")
 async def get_history_stats(current_user: dict = Depends(get_current_user)):
     """Get practice history statistics"""
+    # Optimized query with field projection - only fetch required fields
     all_problems = await db.problems.find(
         {"user_id": current_user["id"], "answered": True},
-        {"_id": 0}
+        {"_id": 0, "correct": 1, "topic": 1, "difficulty": 1}
     ).to_list(1000)
     
     total = len(all_problems)
